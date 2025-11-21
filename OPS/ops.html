@@ -1,9 +1,14 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="it">
 <head>
   <meta charset="UTF-8">
   <title>ATC Flight Board</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
   <style>
     * {
       box-sizing: border-box;
@@ -2521,6 +2526,187 @@
   </div>
 
   <script>
+    // ========================================
+    // FIREBASE CONFIGURATION & INITIALIZATION
+    // ========================================
+    
+    const firebaseConfig = {
+      apiKey: "AIzaSyB-eze8L0n0gmC-BId8ioROiAYKPXIckWs",
+      authDomain: "canavia-ops.firebaseapp.com",
+      projectId: "canavia-ops",
+      storageBucket: "canavia-ops.firebasestorage.app",
+      messagingSenderId: "17496213288",
+      appId: "1:17496213288:web:645bd0c64b942b9948321d",
+      measurementId: "G-8MH36WBBS7"
+    };
+    
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    
+    // Current authenticated user
+    let currentUser = null;
+    
+    // ========================================
+    // SECURE PASSWORD HASHING (SHA-256)
+    // ========================================
+    
+    async function hashPassword(password) {
+      const encoder = new TextEncoder();
+      const data = encoder.encode(password);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+    
+    // Credentials stored in Firestore (loaded at startup)
+    let VALID_CREDENTIALS = null;
+    
+    // Load credentials from Firestore
+    async function loadCredentialsFromCloud() {
+      try {
+        const doc = await db.collection('ops-config').doc('credentials').get();
+        if (doc.exists) {
+          VALID_CREDENTIALS = doc.data();
+          console.log('✅ Credentials loaded from cloud');
+          return true;
+        } else {
+          console.warn('⚠️ No credentials found in cloud');
+          return false;
+        }
+      } catch (error) {
+        console.error('❌ Error loading credentials:', error);
+        return false;
+      }
+    }
+    
+    // ========================================
+    // FIREBASE AUTHENTICATION
+    // ========================================
+    
+    async function loginWithFirebase(username, password) {
+      try {
+        // Load credentials from cloud if not already loaded
+        if (!VALID_CREDENTIALS) {
+          await loadCredentialsFromCloud();
+        }
+        
+        if (!VALID_CREDENTIALS) {
+          throw new Error('Unable to load credentials from server');
+        }
+        
+        const hashedPassword = await hashPassword(password);
+        
+        // Validate credentials
+        if (VALID_CREDENTIALS[username] !== hashedPassword) {
+          throw new Error('Invalid credentials');
+        }
+        
+        // Create/login user with Firebase Auth
+        const email = `${username.toLowerCase()}@canavia.ops`;
+        const firebasePassword = hashedPassword.substring(0, 20); // Use part of hash as Firebase password
+        
+        try {
+          // Try to sign in
+          const userCredential = await auth.signInWithEmailAndPassword(email, firebasePassword);
+          currentUser = userCredential.user;
+          return true;
+        } catch (error) {
+          if (error.code === 'auth/user-not-found') {
+            // Create user if not exists
+            const userCredential = await auth.createUserWithEmailAndPassword(email, firebasePassword);
+            currentUser = userCredential.user;
+            return true;
+          }
+          throw error;
+        }
+      } catch (error) {
+        console.error('Login error:', error);
+        return false;
+      }
+    }
+    
+    // ========================================
+    // FIRESTORE DATABASE SYNC
+    // ========================================
+    
+    // Save state to Firestore
+    async function saveStateToCloud() {
+      if (!currentUser) return;
+      
+      try {
+        await db.collection('ops-data').doc('state').set({
+          airports: state.airports,
+          currentAirport: state.currentAirport,
+          settings: state.settings,
+          fleet: state.fleet,
+          airportDatabase: state.airportDatabase,
+          lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        console.log('✅ Data synced to cloud');
+      } catch (error) {
+        console.error('❌ Cloud sync error:', error);
+      }
+    }
+    
+    // Load state from Firestore
+    async function loadStateFromCloud() {
+      if (!currentUser) return false;
+      
+      try {
+        const doc = await db.collection('ops-data').doc('state').get();
+        if (doc.exists) {
+          const cloudData = doc.data();
+          state.airports = cloudData.airports || {};
+          state.currentAirport = cloudData.currentAirport || "";
+          state.settings = cloudData.settings || state.settings;
+          state.fleet = cloudData.fleet || state.fleet;
+          state.airportDatabase = cloudData.airportDatabase || [];
+          console.log('✅ Data loaded from cloud');
+          return true;
+        }
+        return false;
+      } catch (error) {
+        console.error('❌ Cloud load error:', error);
+        return false;
+      }
+    }
+    
+    // Real-time sync listener
+    function setupRealtimeSync() {
+      if (!currentUser) return;
+      
+      db.collection('ops-data').doc('state')
+        .onSnapshot((doc) => {
+          if (doc.exists) {
+            const cloudData = doc.data();
+            // Only update if data changed externally (not from this device)
+            if (cloudData.lastUpdated && cloudData.lastUpdated.toMillis() > Date.now() - 2000) {
+              state.airports = cloudData.airports || {};
+              state.currentAirport = cloudData.currentAirport || "";
+              state.settings = cloudData.settings || state.settings;
+              state.fleet = cloudData.fleet || state.fleet;
+              state.airportDatabase = cloudData.airportDatabase || [];
+              renderBoard();
+              console.log('🔄 Real-time sync: Data updated from another device');
+            }
+          }
+        }, (error) => {
+          console.error('Real-time sync error:', error);
+        });
+    }
+    
+    // Override saveState to also save to cloud
+    const originalSaveState = function() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    };
+    
+    function saveState() {
+      originalSaveState();
+      saveStateToCloud();
+    }
+    
     // Nasconde TUTTI gli errori/warning da risorse esterne (iframe radar)
     const originalConsoleError = console.error;
     const originalConsoleWarn = console.warn;
@@ -3006,13 +3192,24 @@
       playQnhAlertSound();
     }
 
-    function initLockPassword() {
+    async function initLockPassword() {
       const passwordInput = document.getElementById("lockPasswordInput");
       const overlay = document.getElementById("lockedOverlay");
-      const correctPassword = "2304";
 
-      passwordInput.addEventListener("input", () => {
-        if (passwordInput.value === correctPassword) {
+      passwordInput.addEventListener("input", async () => {
+        // Load credentials from cloud if not already loaded
+        if (!VALID_CREDENTIALS) {
+          await loadCredentialsFromCloud();
+        }
+        
+        if (!VALID_CREDENTIALS || !VALID_CREDENTIALS.LOCK) {
+          console.error('Unable to load LOCK credential from cloud');
+          return;
+        }
+        
+        const inputHash = await hashPassword(passwordInput.value);
+        
+        if (inputHash === VALID_CREDENTIALS.LOCK) {
           overlay.classList.add("hidden");
           passwordInput.value = "";
         }
@@ -4089,9 +4286,21 @@
       document.getElementById("deleteModalBackdrop").classList.remove("active");
     }
 
-    function handlePasswordDelete() {
+    async function handlePasswordDelete() {
       const pwd = document.getElementById("deletePasswordInput").value;
-      if (pwd === '0000') {
+      
+      // Load credentials if not already loaded
+      if (!VALID_CREDENTIALS) {
+        await loadCredentialsFromCloud();
+      }
+      
+      if (!VALID_CREDENTIALS) {
+        alert('Errore: impossibile verificare le credenziali');
+        return;
+      }
+      
+      const hashedPassword = await hashPassword(pwd);
+      if (hashedPassword === VALID_CREDENTIALS.DELETE) {
         state.airports[state.currentAirport] = [];
         saveState();
         closeDeleteModal();
@@ -4111,9 +4320,21 @@
       document.getElementById("deleteSingleModalBackdrop").classList.remove("active");
     }
 
-    function handleSinglePasswordDelete() {
+    async function handleSinglePasswordDelete() {
       const pwd = document.getElementById("deleteSinglePasswordInput").value;
-      if (pwd === '0000') {
+      
+      // Load credentials if not already loaded
+      if (!VALID_CREDENTIALS) {
+        await loadCredentialsFromCloud();
+      }
+      
+      if (!VALID_CREDENTIALS) {
+        alert('Errore: impossibile verificare le credenziali');
+        return;
+      }
+      
+      const hashedPassword = await hashPassword(pwd);
+      if (hashedPassword === VALID_CREDENTIALS.DELETE) {
         const flights = state.airports[state.currentAirport] || [];
         flights.splice(editingFlightIndex, 1);
         state.airports[state.currentAirport] = flights;
@@ -4156,9 +4377,9 @@
     document.getElementById("deleteFlightBtn").addEventListener("click", deleteSingleFlight);
     
     // Auto-delete quando password corretta (4 cifre) - DELETE ALL
-    document.getElementById("deletePasswordInput").addEventListener("input", (e) => {
+    document.getElementById("deletePasswordInput").addEventListener("input", async (e) => {
       if (e.target.value.length === 4) {
-        handlePasswordDelete();
+        await handlePasswordDelete();
       }
     });
 
@@ -4169,13 +4390,35 @@
     });
     
     // Auto-delete quando password corretta (4 cifre) - DELETE SINGLE
-    document.getElementById("deleteSinglePasswordInput").addEventListener("input", (e) => {
+    document.getElementById("deleteSinglePasswordInput").addEventListener("input", async (e) => {
       if (e.target.value.length === 4) {
-        handleSinglePasswordDelete();
+        await handleSinglePasswordDelete();
       }
     });
 
-    function openSettingsModal() {
+    async function openSettingsModal() {
+      // Check if settings are locked
+      if (state.settings.lockSettings) {
+        const password = prompt("Le impostazioni sono bloccate. Inserisci la password:");
+        if (!password) return;
+        
+        // Load credentials if not already loaded
+        if (!VALID_CREDENTIALS) {
+          await loadCredentialsFromCloud();
+        }
+        
+        if (!VALID_CREDENTIALS) {
+          alert('Errore: impossibile verificare le credenziali');
+          return;
+        }
+        
+        const hashedPassword = await hashPassword(password);
+        if (VALID_CREDENTIALS.LOCK !== hashedPassword) {
+          alert("Password errata!");
+          return;
+        }
+      }
+      
       document.getElementById("settingsMetarIcaoInput").value =
         (state.settings.metarIcao || "").toUpperCase();
       document.getElementById("settingsRunwayHeadingInput").value =
@@ -5193,22 +5436,38 @@
       }, 300);
     });
 
-    function attemptLogin() {
+    async function attemptLogin() {
       const username = document.getElementById("loginUsername").value;
       const password = document.getElementById("loginPassword").value;
       const modal = document.querySelector(".login-modal");
       const usernameInput = document.getElementById("loginUsername");
       const passwordInput = document.getElementById("loginPassword");
       
-      if (username === "OPS" && password === "0000") {
+      // Show loading state
+      const loginBtn = document.getElementById("loginBtn");
+      const originalText = loginBtn.textContent;
+      loginBtn.textContent = "Logging in...";
+      loginBtn.disabled = true;
+      
+      const success = await loginWithFirebase(username, password);
+      
+      if (success) {
         modal.classList.remove("error");
         usernameInput.classList.remove("error");
         passwordInput.classList.remove("error");
         document.getElementById("loginError").classList.remove("active");
         
+        // Load data from cloud
+        await loadStateFromCloud();
+        
+        // Setup real-time sync
+        setupRealtimeSync();
+        
         setTimeout(() => {
           document.getElementById("loginModalBackdrop").classList.remove("active");
           document.getElementById("splashScreen").classList.add("hidden");
+          renderBoard();
+          updateMetarFromSettings();
         }, 300);
       } else {
         // Play error sound
@@ -5224,6 +5483,10 @@
         passwordInput.classList.add("error");
         document.getElementById("loginError").classList.add("active");
         document.getElementById("loginPassword").value = "";
+        
+        // Restore button state
+        loginBtn.textContent = originalText;
+        loginBtn.disabled = false;
         
         // Remove error classes after animation
         setTimeout(() => {
