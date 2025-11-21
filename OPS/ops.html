@@ -5559,37 +5559,39 @@
       if (e.key === "Enter") document.getElementById("loginPassword").focus();
     });
 
+    /*
     // TOOL: Calcola hash SHA-256 per password LOCK
-function showLockHashTool() {
-  const toolDiv = document.createElement('div');
-  toolDiv.style.position = 'fixed';
-  toolDiv.style.bottom = '20px';
-  toolDiv.style.right = '20px';
-  toolDiv.style.background = '#222';
-  toolDiv.style.color = '#fff';
-  toolDiv.style.padding = '16px';
-  toolDiv.style.borderRadius = '12px';
-  toolDiv.style.zIndex = '9999';
-  toolDiv.style.boxShadow = '0 2px 8px #0008';
-  toolDiv.innerHTML = `
-    <div style="font-weight:bold;margin-bottom:8px;">Calcola hash LOCK</div>
-    <input id="lockHashInput" type="text" placeholder="Password" style="padding:6px;border-radius:6px;border:1px solid #444;width:120px;">
-    <button id="lockHashBtn" style="margin-left:8px;padding:6px 12px;border-radius:6px;border:none;background:#3b82f6;color:#fff;">Calcola</button>
-    <div id="lockHashResult" style="margin-top:8px;font-size:0.9rem;word-break:break-all;"></div>
-    <button id="lockHashClose" style="margin-top:8px;padding:4px 10px;border-radius:6px;border:none;background:#ef4444;color:#fff;">Chiudi</button>
-  `;
-  document.body.appendChild(toolDiv);
-  document.getElementById('lockHashBtn').onclick = async () => {
-    const val = document.getElementById('lockHashInput').value;
-    const hash = await hashPassword(val);
-    document.getElementById('lockHashResult').textContent = hash;
-  };
-  document.getElementById('lockHashClose').onclick = () => {
-    toolDiv.remove();
-  };
-}
-// Mostra tool all'avvio (puoi togliere questa riga dopo)
-showLockHashTool();
+    function showLockHashTool() {
+      const toolDiv = document.createElement('div');
+      toolDiv.style.position = 'fixed';
+      toolDiv.style.bottom = '20px';
+      toolDiv.style.right = '20px';
+      toolDiv.style.background = '#222';
+      toolDiv.style.color = '#fff';
+      toolDiv.style.padding = '16px';
+      toolDiv.style.borderRadius = '12px';
+      toolDiv.style.zIndex = '9999';
+      toolDiv.style.boxShadow = '0 2px 8px #0008';
+      toolDiv.innerHTML = `
+        <div style="font-weight:bold;margin-bottom:8px;">Calcola hash LOCK</div>
+        <input id="lockHashInput" type="text" placeholder="Password" style="padding:6px;border-radius:6px;border:1px solid #444;width:120px;">
+        <button id="lockHashBtn" style="margin-left:8px;padding:6px 12px;border-radius:6px;border:none;background:#3b82f6;color:#fff;">Calcola</button>
+        <div id="lockHashResult" style="margin-top:8px;font-size:0.9rem;word-break:break-all;"></div>
+        <button id="lockHashClose" style="margin-top:8px;padding:4px 10px;border-radius:6px;border:none;background:#ef4444;color:#fff;">Chiudi</button>
+      `;
+      document.body.appendChild(toolDiv);
+      document.getElementById('lockHashBtn').onclick = async () => {
+        const val = document.getElementById('lockHashInput').value;
+        const hash = await hashPassword(val);
+        document.getElementById('lockHashResult').textContent = hash;
+      };
+      document.getElementById('lockHashClose').onclick = () => {
+        toolDiv.remove();
+      };
+    }
+    // Mostra tool all'avvio (puoi togliere questa riga dopo)
+    showLockHashTool();
+    */
   </script>
 </body>
 </html>
