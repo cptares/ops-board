@@ -1784,7 +1784,7 @@
               <div style="color: #fbbf24; font-weight: 600; font-size: 1rem;" id="sunriseTime">--:--</div>
             </div>
             <div class="utc-time" id="utcTimeValue">--:--:--</div>
-            <div style="font-size: 0.95rem; text-align: center; min-width: 60px;">
+            <div style="font-size: 0.95rem; text-align: center, min-width: 60px;">
               <div style="color: #f97316; margin-bottom: 4px;">🌙</div>
               <div style="color: #f97316; font-weight: 600; font-size: 1rem;" id="sunsetTime">--:--</div>
             </div>
@@ -2743,6 +2743,81 @@
       });
     }
 
+    // --- FIRESTORE SYNC: FLEET & AIRPORTS ---
+    // Salva la flotta su Firestore
+    async function saveFleetToCloud(fleet) {
+      try {
+        await db.collection('ops-data').doc('fleet').set({ fleet }, { merge: true });
+        console.log('🛩️ Flotta salvata su Firestore');
+      } catch (e) {
+        console.error('Errore salvataggio flotta su Firestore:', e);
+      }
+    }
+    // Carica la flotta da Firestore
+    async function loadFleetFromCloud() {
+      try {
+        const doc = await db.collection('ops-data').doc('fleet').get();
+        if (doc.exists && doc.data().fleet) {
+          state.fleet = doc.data().fleet;
+          console.log('🛩️ Flotta caricata da Firestore');
+        } else {
+          state.fleet = [];
+          console.log('Nessun aereo trovato su Firestore');
+        }
+        renderFleetList();
+      } catch (e) {
+        console.error('Errore caricamento flotta da Firestore:', e);
+      }
+    }
+    // Listener realtime per la flotta
+    function listenFleetRealtime() {
+      db.collection('ops-data').doc('fleet').onSnapshot(doc => {
+        if (doc.exists && doc.data().fleet) {
+          state.fleet = doc.data().fleet;
+          renderFleetList();
+        }
+      });
+    }
+    // Salva gli aeroporti su Firestore
+    async function saveAirportsToCloud(airportDatabase) {
+      try {
+        await db.collection('ops-data').doc('airports').set({ airportDatabase }, { merge: true });
+        console.log('🛫 Aeroporti salvati su Firestore');
+      } catch (e) {
+        console.error('Errore salvataggio aeroporti su Firestore:', e);
+      }
+    }
+    // Carica gli aeroporti da Firestore
+    async function loadAirportsFromCloud() {
+      try {
+        const doc = await db.collection('ops-data').doc('airports').get();
+        if (doc.exists && doc.data().airportDatabase) {
+          state.airportDatabase = doc.data().airportDatabase;
+          console.log('🛫 Aeroporti caricati da Firestore');
+        } else {
+          state.airportDatabase = [];
+          console.log('Nessun aeroporto trovato su Firestore');
+        }
+        renderAirportList();
+      } catch (e) {
+        console.error('Errore caricamento aeroporti da Firestore:', e);
+      }
+    }
+    // Listener realtime per gli aeroporti
+    function listenAirportsRealtime() {
+      db.collection('ops-data').doc('airports').onSnapshot(doc => {
+        if (doc.exists && doc.data().airportDatabase) {
+          state.airportDatabase = doc.data().airportDatabase;
+          renderAirportList();
+        }
+      });
+    }
+
+    // --- PATCH FUNZIONI ESISTENTI ---
+    // Sostituisci saveState() con saveFleetToCloud(state.fleet) e saveAirportsToCloud(state.airportDatabase)
+    // Chiama loadFleetFromCloud(), loadAirportsFromCloud(), listenFleetRealtime(), listenAirportsRealtime() all'avvio
+    // --- FINE PATCH ---
+    
     // Nasconde TUTTI gli errori/warning da risorse esterne (iframe radar)
     const originalConsoleError = console.error;
     const originalConsoleWarn = console.warn;
@@ -5253,13 +5328,6 @@
     document.getElementById("closeRadarBtn").addEventListener("click", () => {
       document.getElementById("radarModalBackdrop").classList.remove("active");
       document.getElementById("radarIframe").src = ""; // unload iframe
-    });
-    
-    document.getElementById("radarModalBackdrop").addEventListener("click", (e) => {
-      if (e.target.id === "radarModalBackdrop") {
-        document.getElementById("radarModalBackdrop").classList.remove("active");
-        document.getElementById("radarIframe").src = "";
-      }
     });
     
     // FlightLogger modal handlers
