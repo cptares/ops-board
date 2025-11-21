@@ -3216,6 +3216,9 @@
         }
         
         const inputHash = await hashPassword(passwordInput.value);
+        console.log("LOCK hash Firestore:", VALID_CREDENTIALS.LOCK);
+        console.log("LOCK hash inserito:", inputHash);
+        console.log("Password inserita:", passwordInput.value);
         
         if (inputHash === VALID_CREDENTIALS.LOCK) {
           overlay.classList.add("hidden");
