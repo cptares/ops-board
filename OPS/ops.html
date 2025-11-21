@@ -4,11 +4,6 @@
   <meta charset="UTF-8">
   <title>ATC Flight Board</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
   <style>
     * {
       box-sizing: border-box;
@@ -1010,103 +1005,6 @@
       50% { box-shadow: 0 0 45px rgba(59, 130, 246, 0.6); }
     }
 
-    /* QNH CHANGE ALERT MODAL */
-    .qnh-alert-modal {
-      background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
-      border: 2px solid #22d3ee;
-      box-shadow: 0 0 40px rgba(6, 182, 212, 0.6);
-      animation: qnhPulse 2s ease-in-out infinite;
-      max-width: 550px;
-      width: 90%;
-      border-radius: 18px;
-      padding: 32px;
-      color: #fff;
-    }
-
-    @keyframes qnhPulse {
-      0%, 100% { box-shadow: 0 0 40px rgba(6, 182, 212, 0.6); }
-      50% { box-shadow: 0 0 70px rgba(6, 182, 212, 0.9); }
-    }
-
-    .qnh-alert-title {
-      font-size: 2rem;
-      font-weight: 900;
-      color: #fff;
-      text-align: center;
-      margin-bottom: 12px;
-      text-shadow: 0 2px 10px rgba(0,0,0,0.5);
-      letter-spacing: 2px;
-      text-transform: uppercase;
-    }
-
-    .qnh-alert-value {
-      font-size: 5rem;
-      font-weight: 900;
-      color: #fff;
-      text-align: center;
-      margin: 30px 0;
-      text-shadow: 0 4px 20px rgba(0,0,0,0.6);
-      letter-spacing: 4px;
-      font-family: 'Courier New', monospace;
-    }
-
-    .qnh-alert-subtitle {
-      font-size: 1.1rem;
-      color: #cffafe;
-      text-align: center;
-      margin-bottom: 24px;
-      font-weight: 600;
-    }
-
-    .qnh-alert-change {
-      background: rgba(0,0,0,0.3);
-      border-radius: 12px;
-      padding: 20px;
-      margin-bottom: 24px;
-      text-align: center;
-    }
-
-    .qnh-change-label {
-      color: #cffafe;
-      font-size: 0.9rem;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 8px;
-    }
-
-    .qnh-change-value {
-      color: #fff;
-      font-size: 1.8rem;
-      font-weight: 800;
-      font-family: 'Courier New', monospace;
-    }
-
-    .qnh-alert-footer {
-      display: flex;
-      justify-content: center;
-      margin-top: 24px;
-    }
-
-    .qnh-alert-btn {
-      background: rgba(255,255,255,0.2);
-      color: #fff;
-      border: 2px solid #fff;
-      padding: 12px 40px;
-      border-radius: 8px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all 0.2s;
-      font-size: 1rem;
-      text-transform: uppercase;
-      letter-spacing: 1.5px;
-    }
-
-    .qnh-alert-btn:hover {
-      background: #fff;
-      color: #0891b2;
-      transform: scale(1.05);
-    }
-
     .squawk-reminder-title {
       font-size: 1.6rem;
       font-weight: 800;
@@ -1254,7 +1152,7 @@
       justify-content: space-between;
       align-items: center;
       padding: 8px 6px;
-      border-bottom: 1px solid rgba(55, 65, 81, 0.7);
+      border-bottom: 1px solid rgba(55,65,81,0.7);
     }
 
     #deleteFlightsList input[type="checkbox"] {
@@ -1743,23 +1641,21 @@
     }
 
   </style>
-  <!-- FAVICON FIX -->
-  <link rel="icon" href="https://www.gstatic.com/images/branding/product/1x/favicon.ico" type="image/x-icon">
 </head>
 <body>
   <!-- SPLASH SCREEN -->
   <div class="splash-screen" id="splashScreen">
-    <img src="images/logo/OPS.png" alt="Logo" class="splash-logo" id="mainLogo">
+    <img src="images/logo/OPS.png" alt="Logo" class="splash-logo">
   </div>
 
   <!-- LOGIN MODAL -->
   <div class="login-modal-backdrop" id="loginModalBackdrop">
     <div class="login-modal">
       <div class="login-input-group">
-        <input type="text" id="loginUsername" placeholder="USER" autocomplete="off">
+        <input type="text" id="loginUsername" placeholder="Username" autocomplete="off">
       </div>
       <div class="login-input-group">
-        <input type="password" id="loginPassword" placeholder="PASS" autocomplete="off">
+        <input type="password" id="loginPassword" placeholder="Password" autocomplete="off">
       </div>
       <button class="login-btn" id="loginBtn">Enter</button>
       <div class="login-error" id="loginError">Invalid credentials</div>
@@ -1784,7 +1680,7 @@
               <div style="color: #fbbf24; font-weight: 600; font-size: 1rem;" id="sunriseTime">--:--</div>
             </div>
             <div class="utc-time" id="utcTimeValue">--:--:--</div>
-            <div style="font-size: 0.95rem; text-align: center, min-width: 60px;">
+            <div style="font-size: 0.95rem; text-align: center; min-width: 60px;">
               <div style="color: #f97316; margin-bottom: 4px;">🌙</div>
               <div style="color: #f97316; font-weight: 600; font-size: 1rem;" id="sunsetTime">--:--</div>
             </div>
@@ -2210,7 +2106,9 @@
     </div>
   </div>
 
-  <!-- MINI MODAL
+  <!-- MINI MODAL PER ORARIO QUICK OPS -->
+  <div class="modal-backdrop" id="timeModalBackdrop">
+    <div class="modal" style="width:260px;" id="timeModal">
       <div class="modal-title" id="timeModalTitle">Set time</div>
       <div>
           <div class="modal-label">HHMM - CURRENT BUTTON</div>
@@ -2287,22 +2185,6 @@
       <div class="squawk-reminder-footer">
         <button class="squawk-reminder-btn" id="assignSquawkBtn">🎯 ASSIGN SQUAWK</button>
         <button class="squawk-reminder-btn" id="dismissSquawkReminderBtn">ACKNOWLEDGE</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- QNH CHANGE ALERT MODAL -->
-  <div class="modal-backdrop" id="qnhAlertBackdrop">
-    <div class="qnh-alert-modal">
-      <div class="qnh-alert-title">⚠️ NEW QNH ALERT</div>
-      <div class="qnh-alert-subtitle">Pressure Altitude Changed</div>
-      <div class="qnh-alert-value" id="qnhAlertValue">----</div>
-      <div class="qnh-alert-change">
-        <div class="qnh-change-label">Previous QNH</div>
-        <div class="qnh-change-value" id="qnhPreviousValue">----</div>
-      </div>
-      <div class="qnh-alert-footer">
-        <button class="qnh-alert-btn" id="dismissQnhAlertBtn">ACKNOWLEDGE</button>
       </div>
     </div>
   </div>
@@ -2526,310 +2408,6 @@
   </div>
 
   <script>
-        // Rendi il logo cliccabile per riaprire la schermata di login
-        document.getElementById('mainLogo').addEventListener('click', () => {
-          document.getElementById('splashScreen').classList.remove('hidden');
-          document.getElementById('splashScreen').classList.remove('slide-up');
-          document.getElementById('loginModalBackdrop').classList.add('active');
-          document.getElementById('loginUsername').value = "";
-          document.getElementById('loginPassword').value = "";
-          document.getElementById('loginError').classList.remove('active');
-          document.getElementById('loginUsername').classList.remove('error');
-          document.getElementById('loginPassword').classList.remove('error');
-          setTimeout(() => document.getElementById('loginUsername').focus(), 100);
-        });
-    // ========================================
-    // FIREBASE CONFIGURATION & INITIALIZATION
-    // ========================================
-    
-    const firebaseConfig = {
-      apiKey: "AIzaSyB-eze8L0n0gmC-BId8ioROiAYKPXIckWs",
-      authDomain: "canavia-ops.firebaseapp.com",
-      projectId: "canavia-ops",
-      storageBucket: "canavia-ops.firebasestorage.app",
-      messagingSenderId: "17496213288",
-      appId: "1:17496213288:web:645bd0c64b942b9948321d",
-      measurementId: "G-8MH36WBBS7"
-    };
-    
-    // Initialize Firebase
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
-    
-    // Current authenticated user
-    let currentUser = null;
-    
-    // ========================================
-    // SECURE PASSWORD HASHING (SHA-256)
-    // ========================================
-    
-    async function hashPassword(password) {
-      const encoder = new TextEncoder();
-      const data = encoder.encode(password);
-      const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-      const hashArray = Array.from(new Uint8Array(hashBuffer));
-      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-    }
-    
-    // Credentials stored in Firestore (loaded at startup)
-    let VALID_CREDENTIALS = null;
-    
-    // Load credentials from Firestore
-    async function loadCredentialsFromCloud() {
-      try {
-        const doc = await db.collection('ops-config').doc('credentials').get();
-        if (doc.exists) {
-          VALID_CREDENTIALS = doc.data();
-          console.log('✅ Credentials loaded from cloud');
-          return true;
-        } else {
-          console.warn('⚠️ No credentials found in cloud');
-          return false;
-        }
-      } catch (error) {
-        console.error('❌ Error loading credentials:', error);
-        return false;
-      }
-    }
-    
-    // ========================================
-    // FIREBASE AUTHENTICATION
-    // ========================================
-    
-    async function loginWithFirebase(username, password) {
-      try {
-        // Load credentials from cloud if not already loaded
-        if (!VALID_CREDENTIALS) {
-          await loadCredentialsFromCloud();
-        }
-        
-        if (!VALID_CREDENTIALS) {
-          throw new Error('Unable to load credentials from server');
-        }
-        
-        const hashedPassword = await hashPassword(password);
-        
-        // Validate credentials
-        if (VALID_CREDENTIALS[username] !== hashedPassword) {
-          throw new Error('Invalid credentials');
-        }
-        
-        // Create/login user with Firebase Auth
-        const email = `${username.toLowerCase()}@canavia.ops`;
-        const firebasePassword = hashedPassword.substring(0, 20); // Use part of hash as Firebase password
-        
-        try {
-          // Try to sign in
-          const userCredential = await auth.signInWithEmailAndPassword(email, firebasePassword);
-          currentUser = userCredential.user;
-          return true;
-        } catch (error) {
-          if (error.code === 'auth/user-not-found') {
-            // Create user if not exists
-            const userCredential = await auth.createUserWithEmailAndPassword(email, firebasePassword);
-            currentUser = userCredential.user;
-            return true;
-          }
-          throw error;
-        }
-      } catch (error) {
-        console.error('Login error:', error);
-        return false;
-      }
-    }
-    
-    // ========================================
-    // FIRESTORE DATABASE SYNC
-    // ========================================
-    
-    // Save state to Firestore
-    async function saveStateToCloud() {
-      if (!currentUser) return;
-      
-      try {
-        await db.collection('ops-data').doc('state').set({
-          airports: state.airports,
-          currentAirport: state.currentAirport,
-          settings: state.settings,
-          fleet: state.fleet,
-          airportDatabase: state.airportDatabase,
-          lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        console.log('✅ Data synced to cloud');
-      } catch (error) {
-        console.error('❌ Cloud sync error:', error);
-      }
-    }
-    
-    // Load state from Firestore
-    async function loadStateFromCloud() {
-      if (!currentUser) return false;
-      
-      try {
-        const doc = await db.collection('ops-data').doc('state').get();
-        if (doc.exists) {
-          const cloudData = doc.data();
-          state.airports = cloudData.airports || {};
-          state.currentAirport = cloudData.currentAirport || "";
-          state.settings = cloudData.settings || state.settings;
-          state.fleet = cloudData.fleet || state.fleet;
-          state.airportDatabase = cloudData.airportDatabase || [];
-          console.log('✅ Data loaded from cloud');
-          return true;
-        }
-        return false;
-      } catch (error) {
-        console.error('❌ Cloud load error:', error);
-        return false;
-      }
-    }
-    
-    // Real-time sync listener
-    function setupRealtimeSync() {
-      if (!currentUser) return;
-      
-      db.collection('ops-data').doc('state')
-        .onSnapshot((doc) => {
-          if (doc.exists) {
-            const cloudData = doc.data();
-            // Only update if data changed externally (not from this device)
-            if (cloudData.lastUpdated && cloudData.lastUpdated.toMillis() > Date.now() - 2000) {
-              state.airports = cloudData.airports || {};
-              state.currentAirport = cloudData.currentAirport || "";
-              state.settings = cloudData.settings || state.settings;
-              state.fleet = cloudData.fleet || state.fleet;
-              state.airportDatabase = cloudData.airportDatabase || [];
-              renderBoard();
-              console.log('🔄 Real-time sync: Data updated from another device');
-            }
-          }
-        }, (error) => {
-          console.error('Real-time sync error:', error);
-        });
-    }
-    
-    // Override saveState to also save to cloud
-    const originalSaveState = function() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    };
-    
-    function saveState() {
-      originalSaveState();
-      saveStateToCloud();
-    }
-
-    // --- FIRESTORE SYNC: FLIGHTS ---
-    // Salva tutti i voli dell'aeroporto corrente su Firestore
-    async function saveFlightsToCloud(airport, flights) {
-      try {
-        await db.collection('ops-data').doc('flights').set({ [airport]: flights }, { merge: true });
-        console.log('✈️ Voli salvati su Firestore');
-      } catch (e) {
-        console.error('Errore salvataggio voli su Firestore:', e);
-      }
-    }
-    // Carica tutti i voli da Firestore
-    async function loadFlightsFromCloud(airport) {
-      try {
-        const doc = await db.collection('ops-data').doc('flights').get();
-        if (doc.exists && doc.data()[airport]) {
-          state.airports[airport] = doc.data()[airport];
-          console.log('✈️ Voli caricati da Firestore');
-        } else {
-          state.airports[airport] = [];
-          console.log('Nessun volo trovato su Firestore');
-        }
-        renderBoard();
-      } catch (e) {
-        console.error('Errore caricamento voli da Firestore:', e);
-      }
-    }
-    // Listener realtime per aggiornare la board su tutti i dispositivi
-    function listenFlightsRealtime(airport) {
-      db.collection('ops-data').doc('flights').onSnapshot(doc => {
-        if (doc.exists && doc.data()[airport]) {
-          state.airports[airport] = doc.data()[airport];
-          renderBoard();
-        }
-      });
-    }
-
-    // --- FIRESTORE SYNC: FLEET & AIRPORTS ---
-    // Salva la flotta su Firestore
-    async function saveFleetToCloud(fleet) {
-      try {
-        await db.collection('ops-data').doc('fleet').set({ fleet }, { merge: true });
-        console.log('🛩️ Flotta salvata su Firestore');
-      } catch (e) {
-        console.error('Errore salvataggio flotta su Firestore:', e);
-      }
-    }
-    // Carica la flotta da Firestore
-    async function loadFleetFromCloud() {
-      try {
-        const doc = await db.collection('ops-data').doc('fleet').get();
-        if (doc.exists && doc.data().fleet) {
-          state.fleet = doc.data().fleet;
-          console.log('🛩️ Flotta caricata da Firestore');
-        } else {
-          state.fleet = [];
-          console.log('Nessun aereo trovato su Firestore');
-        }
-        renderFleetList();
-      } catch (e) {
-        console.error('Errore caricamento flotta da Firestore:', e);
-      }
-    }
-    // Listener realtime per la flotta
-    function listenFleetRealtime() {
-      db.collection('ops-data').doc('fleet').onSnapshot(doc => {
-        if (doc.exists && doc.data().fleet) {
-          state.fleet = doc.data().fleet;
-          renderFleetList();
-        }
-      });
-    }
-    // Salva gli aeroporti su Firestore
-    async function saveAirportsToCloud(airportDatabase) {
-      try {
-        await db.collection('ops-data').doc('airports').set({ airportDatabase }, { merge: true });
-        console.log('🛫 Aeroporti salvati su Firestore');
-      } catch (e) {
-        console.error('Errore salvataggio aeroporti su Firestore:', e);
-      }
-    }
-    // Carica gli aeroporti da Firestore
-    async function loadAirportsFromCloud() {
-      try {
-        const doc = await db.collection('ops-data').doc('airports').get();
-        if (doc.exists && doc.data().airportDatabase) {
-          state.airportDatabase = doc.data().airportDatabase;
-          console.log('🛫 Aeroporti caricati da Firestore');
-        } else {
-          state.airportDatabase = [];
-          console.log('Nessun aeroporto trovato su Firestore');
-        }
-        renderAirportList();
-      } catch (e) {
-        console.error('Errore caricamento aeroporti da Firestore:', e);
-      }
-    }
-    // Listener realtime per gli aeroporti
-    function listenAirportsRealtime() {
-      db.collection('ops-data').doc('airports').onSnapshot(doc => {
-        if (doc.exists && doc.data().airportDatabase) {
-          state.airportDatabase = doc.data().airportDatabase;
-          renderAirportList();
-        }
-      });
-    }
-
-    // --- PATCH FUNZIONI ESISTENTI ---
-    // Sostituisci saveState() con saveFleetToCloud(state.fleet) e saveAirportsToCloud(state.airportDatabase)
-    // Chiama loadFleetFromCloud(), loadAirportsFromCloud(), listenFleetRealtime(), listenAirportsRealtime() all'avvio
-    // --- FINE PATCH ---
-    
     // Nasconde TUTTI gli errori/warning da risorse esterne (iframe radar)
     const originalConsoleError = console.error;
     const originalConsoleWarn = console.warn;
@@ -2913,7 +2491,8 @@
       ],
       airportDatabase: [],
       delayNotified: {}, // Traccia voli che hanno già mostrato delay advise
-      squawkReminded: {} // Traccia voli per cui è già stato mostrato squawk reminder
+      squawkReminded: {}, // Traccia voli per cui è già stato mostrato squawk reminder
+      lastQnh: null // Traccia l'ultimo QNH mostrato
     };
 
     let selectedFlightIndex = null;
@@ -2987,6 +2566,26 @@
 
     // SQUAWK REMINDER SOUND (gentile, come una notifica)
     function playReminderSound() {
+          // QNH CHANGE SOUND (breve beep singolo)
+          function playQnhChangeSound() {
+            try {
+              const ctx = getAudioContext();
+              const now = ctx.currentTime;
+              const oscillator = ctx.createOscillator();
+              const gainNode = ctx.createGain();
+              oscillator.connect(gainNode);
+              gainNode.connect(ctx.destination);
+              oscillator.frequency.value = 1200;
+              oscillator.type = 'sine';
+              gainNode.gain.setValueAtTime(0, now);
+              gainNode.gain.linearRampToValueAtTime(0.5, now + 0.05);
+              gainNode.gain.linearRampToValueAtTime(0, now + 0.25);
+              oscillator.start(now);
+              oscillator.stop(now + 0.25);
+            } catch (e) {
+              console.error('Audio context error:', e);
+            }
+          }
       try {
         const ctx = getAudioContext();
         const now = ctx.currentTime;
@@ -3015,39 +2614,6 @@
       }
     }
 
-    // QNH CHANGE ALERT SOUND (distintivo per attirare l'attenzione)
-    function playQnhAlertSound() {
-      try {
-        const ctx = getAudioContext();
-        const now = ctx.currentTime;
-        
-        // Suono di alert QNH: tre toni ascendenti con pausa
-        [600, 750, 900].forEach((freq, i) => {
-          const oscillator = ctx.createOscillator();
-          const gainNode = ctx.createGain();
-          
-          oscillator.connect(gainNode);
-          gainNode.connect(ctx.destination);
-          
-          oscillator.frequency.value = freq;
-          oscillator.type = 'sine';
-          
-          const startTime = now + (i * 0.35);
-          gainNode.gain.setValueAtTime(0, startTime);
-          gainNode.gain.linearRampToValueAtTime(0.5, startTime + 0.05);
-          gainNode.gain.linearRampToValueAtTime(0, startTime + 0.25);
-          
-          oscillator.start(startTime);
-          oscillator.stop(startTime + 0.25);
-        });
-      } catch (e) {
-        console.error('Audio context error:', e);
-      }
-    }
-
-    // Variabili per monitorare QNH
-    let lastKnownQnh = null;
-
     let delayAdviseFlightIndex = null;
     let squawkReminderFlightIndex = null;
 
@@ -3065,7 +2631,7 @@
       document.getElementById("squawkModalBackdrop").classList.remove("active");
       document.getElementById("timeModalBackdrop").classList.remove("active");
       document.getElementById("editFleetModalBackdrop").classList.remove("active");
-      // Non chiudo i modal di notifica (delay/squawk reminder/qnh alert) qui perché hanno priorità
+      // Non chiudo i modal di notifica (delay/squawk reminder) qui perché hanno priorità
     }
 
     function openCalcModal() {
@@ -3268,6 +2834,26 @@
     }
 
     function showDelayAdvise(flight, flightIndex) {
+          // QNH CHANGE POPUP
+          function showQnhChangePopup(newQnh) {
+            closeAllModals();
+            let backdrop = document.getElementById("qnhChangeBackdrop");
+            if (!backdrop) {
+              backdrop = document.createElement("div");
+              backdrop.id = "qnhChangeBackdrop";
+              backdrop.className = "modal-backdrop";
+              backdrop.innerHTML = `<div class="modal" style="width:340px;text-align:center;animation:qnhPopAnim 0.5s;"><div class="modal-title" style="color:#38bdf8;font-size:2rem;">NEW QNH</div><div style="padding:20px;font-size:1.3rem;font-weight:700;">${newQnh} hPa</div></div>`;
+              document.body.appendChild(backdrop);
+              const style = document.createElement('style');
+              style.innerHTML = `@keyframes qnhPopAnim {0%{transform:scale(0.7);opacity:0;}60%{transform:scale(1.1);opacity:1;}100%{transform:scale(1);opacity:1;}}`;
+              document.head.appendChild(style);
+            } else {
+              backdrop.querySelector('.modal-title').textContent = "NEW QNH";
+              backdrop.querySelector('div[style*="padding:20px"]').textContent = `${newQnh} hPa`;
+            }
+            backdrop.classList.add("active");
+            setTimeout(() => {backdrop.classList.remove("active");}, 2500);
+          }
       closeAllModals(); // Chiudi tutti i modal prima di mostrare delay advise
       const backdrop = document.getElementById("delayModalBackdrop");
       const infoDiv = document.getElementById("delayFlightInfo");
@@ -3302,55 +2888,15 @@
       playDelaySound();
     }
 
-    function showQnhAlert(newQnh, oldQnh) {
-      closeAllModals(); // Chiudi tutti i modal prima di mostrare QNH alert
-      const backdrop = document.getElementById("qnhAlertBackdrop");
-      const valueEl = document.getElementById("qnhAlertValue");
-      const previousEl = document.getElementById("qnhPreviousValue");
-      
-      valueEl.textContent = `${newQnh} hPa`;
-      previousEl.textContent = oldQnh ? `${oldQnh} hPa` : 'N/A';
-      
-      backdrop.classList.add("active");
-      playQnhAlertSound();
-    }
-
-    async function initLockPassword() {
+    function initLockPassword() {
       const passwordInput = document.getElementById("lockPasswordInput");
       const overlay = document.getElementById("lockedOverlay");
+      const correctPassword = "2304";
 
-      const errorMsg = document.createElement("div");
-      errorMsg.id = "lockPasswordError";
-      errorMsg.style.color = "#ef4444";
-      errorMsg.style.fontSize = "1rem";
-      errorMsg.style.marginTop = "10px";
-      errorMsg.style.textAlign = "center";
-      overlay.appendChild(errorMsg);
-
-      passwordInput.addEventListener("input", async () => {
-        // Load credentials from cloud if not already loaded
-        if (!VALID_CREDENTIALS) {
-          await loadCredentialsFromCloud();
-        }
-        
-        if (!VALID_CREDENTIALS || !VALID_CREDENTIALS.LOCK) {
-          errorMsg.textContent = "Errore di connessione al database!";
-          return;
-        }
-        
-        const inputHash = await hashPassword(passwordInput.value);
-        console.log("LOCK hash Firestore:", VALID_CREDENTIALS.LOCK);
-        console.log("LOCK hash inserito:", inputHash);
-        console.log("Password inserita:", passwordInput.value);
-        
-        if (inputHash === VALID_CREDENTIALS.LOCK) {
+      passwordInput.addEventListener("input", () => {
+        if (passwordInput.value === correctPassword) {
           overlay.classList.add("hidden");
           passwordInput.value = "";
-          errorMsg.textContent = "";
-        } else if (passwordInput.value.length >= 4) {
-          errorMsg.textContent = "Password errata";
-        } else {
-          errorMsg.textContent = "";
         }
       });
     }
@@ -3758,6 +3304,8 @@
           tdSquawk.appendChild(wrap);
         }
         tr.appendChild(tdSquawk);
+
+        // details column removed — quick ops covers actions
 
         // QUICK OPS: edit + dep + arr
         const tdOps = document.createElement("td");
@@ -4171,8 +3719,6 @@
 
       state.airports[state.currentAirport] = flights;
       saveState();
-      // salva anche su Firestore
-      saveFlightsToCloud(state.currentAirport, flights);
       closeFlightModal();
       renderBoard();
       renderSelectedFlight(newFlight);
@@ -4287,6 +3833,9 @@
       renderBoard();
       if (selectedFlightIndex === idx) renderSelectedFlight(f);
     }
+
+    document.getElementById("cancelTimeBtn").addEventListener("click", closeTimeModal);
+    // saveTimeBtn removed: saving now happens automatically on input or via CURRENT
 
     // Enter per salvare nel mini modal
     document.getElementById("timeModalInput").addEventListener("keydown", (e) => {
@@ -4422,25 +3971,11 @@
       document.getElementById("deleteModalBackdrop").classList.remove("active");
     }
 
-    async function handlePasswordDelete() {
+    function handlePasswordDelete() {
       const pwd = document.getElementById("deletePasswordInput").value;
-      
-      // Load credentials if not already loaded
-      if (!VALID_CREDENTIALS) {
-        await loadCredentialsFromCloud();
-      }
-      
-      if (!VALID_CREDENTIALS) {
-        alert('Errore: impossibile verificare le credenziali');
-        return;
-      }
-      
-      const hashedPassword = await hashPassword(pwd);
-      if (hashedPassword === VALID_CREDENTIALS.DELETE) {
+      if (pwd === '0000') {
         state.airports[state.currentAirport] = [];
         saveState();
-        // salva anche su Firestore
-        await saveFlightsToCloud(state.currentAirport, []);
         closeDeleteModal();
         renderBoard();
       }
@@ -4458,27 +3993,13 @@
       document.getElementById("deleteSingleModalBackdrop").classList.remove("active");
     }
 
-    async function handleSinglePasswordDelete() {
+    function handleSinglePasswordDelete() {
       const pwd = document.getElementById("deleteSinglePasswordInput").value;
-      
-      // Load credentials if not already loaded
-      if (!VALID_CREDENTIALS) {
-        await loadCredentialsFromCloud();
-      }
-      
-      if (!VALID_CREDENTIALS) {
-        alert('Errore: impossibile verificare le credenziali');
-        return;
-      }
-      
-      const hashedPassword = await hashPassword(pwd);
-      if (hashedPassword === VALID_CREDENTIALS.DELETE) {
+      if (pwd === '0000') {
         const flights = state.airports[state.currentAirport] || [];
         flights.splice(editingFlightIndex, 1);
         state.airports[state.currentAirport] = flights;
         saveState();
-        // salva anche su Firestore
-        await saveFlightsToCloud(state.currentAirport, flights);
         closeSingleDeleteModal();
         closeFlightModal();
         renderBoard();
@@ -4517,9 +4038,9 @@
     document.getElementById("deleteFlightBtn").addEventListener("click", deleteSingleFlight);
     
     // Auto-delete quando password corretta (4 cifre) - DELETE ALL
-    document.getElementById("deletePasswordInput").addEventListener("input", async (e) => {
+    document.getElementById("deletePasswordInput").addEventListener("input", (e) => {
       if (e.target.value.length === 4) {
-        await handlePasswordDelete();
+        handlePasswordDelete();
       }
     });
 
@@ -4530,35 +4051,13 @@
     });
     
     // Auto-delete quando password corretta (4 cifre) - DELETE SINGLE
-    document.getElementById("deleteSinglePasswordInput").addEventListener("input", async (e) => {
+    document.getElementById("deleteSinglePasswordInput").addEventListener("input", (e) => {
       if (e.target.value.length === 4) {
-        await handleSinglePasswordDelete();
+        handleSinglePasswordDelete();
       }
     });
 
-    async function openSettingsModal() {
-      // Check if settings are locked
-      if (state.settings.lockSettings) {
-        const password = prompt("Le impostazioni sono bloccate. Inserisci la password:");
-        if (!password) return;
-        
-        // Load credentials if not already loaded
-        if (!VALID_CREDENTIALS) {
-          await loadCredentialsFromCloud();
-        }
-        
-        if (!VALID_CREDENTIALS) {
-          alert('Errore: impossibile verificare le credenziali');
-          return;
-        }
-        
-        const hashedPassword = await hashPassword(password);
-        if (VALID_CREDENTIALS.LOCK !== hashedPassword) {
-          alert("Password errata!");
-          return;
-        }
-      }
-      
+    function openSettingsModal() {
       document.getElementById("settingsMetarIcaoInput").value =
         (state.settings.metarIcao || "").toUpperCase();
       document.getElementById("settingsRunwayHeadingInput").value =
@@ -4754,7 +4253,7 @@
 
         const info = document.createElement("div");
         info.className = "fleet-info";
-        info.innerHTML = `<span class="fleet-reg">${a.icao}</span> · <span class="fleet-type">${a.type}</span>`;
+        info.innerHTML = `<span class="fleet-reg">${a.reg}</span> · <span class="fleet-type">${a.type}</span>`;
 
         const btnContainer = document.createElement("div");
         btnContainer.style.display = "flex";
@@ -4882,18 +4381,17 @@
       const windTextEl = document.getElementById("windText");
       const componentsEl = document.getElementById("componentsText");
 
-      // Controlla se il QNH è cambiato e mostra alert
-      if (qnh && lastKnownQnh !== null && qnh !== lastKnownQnh) {
-        showQnhAlert(qnh, lastKnownQnh);
-      }
-      
-      // Aggiorna lastKnownQnh solo se valido
+      // QNH change detection and alert
       if (qnh) {
-        lastKnownQnh = qnh;
+        qnhEl.textContent = `${qnh} hPa`;
+        if (state.lastQnh !== null && qnh !== state.lastQnh) {
+          showQnhChangePopup(qnh);
+          playQnhChangeSound();
+        }
+        state.lastQnh = qnh;
+      } else {
+        qnhEl.textContent = "----";
       }
-
-      if (qnh) qnhEl.textContent = `${qnh} hPa`;
-      else qnhEl.textContent = "----";
 
       if (windSpd != null) {
         const dirText = (windDir == null)
@@ -5253,17 +4751,6 @@
       document.getElementById("squawkReminderBackdrop").classList.remove("active");
     });
     
-    // QNH ALERT MODAL
-    document.getElementById("dismissQnhAlertBtn").addEventListener("click", () => {
-      document.getElementById("qnhAlertBackdrop").classList.remove("active");
-    });
-    
-    document.getElementById("qnhAlertBackdrop").addEventListener("click", (e) => {
-      if (e.target.id === "qnhAlertBackdrop") {
-        document.getElementById("qnhAlertBackdrop").classList.remove("active");
-      }
-    });
-    
     // TIME CALCULATOR MODAL
     document.getElementById("calcBtn").addEventListener("click", openCalcModal);
     document.getElementById("closeCalcBtn").addEventListener("click", closeCalcModal);
@@ -5340,6 +4827,13 @@
     document.getElementById("closeRadarBtn").addEventListener("click", () => {
       document.getElementById("radarModalBackdrop").classList.remove("active");
       document.getElementById("radarIframe").src = ""; // unload iframe
+    });
+    
+    document.getElementById("radarModalBackdrop").addEventListener("click", (e) => {
+      if (e.target.id === "radarModalBackdrop") {
+        document.getElementById("radarModalBackdrop").classList.remove("active");
+        document.getElementById("radarIframe").src = "";
+      }
     });
     
     // FlightLogger modal handlers
@@ -5440,7 +4934,6 @@
         // Trova dove dovrebbe essere inserito
         const afterElement = getDragAfterElement(leftColumn, e.clientY);
         if (afterElement == null) {
-
           leftColumn.appendChild(placeholder);
         } else {
           leftColumn.insertBefore(placeholder, afterElement);
@@ -5570,38 +5063,22 @@
       }, 300);
     });
 
-    async function attemptLogin() {
+    function attemptLogin() {
       const username = document.getElementById("loginUsername").value;
       const password = document.getElementById("loginPassword").value;
       const modal = document.querySelector(".login-modal");
       const usernameInput = document.getElementById("loginUsername");
       const passwordInput = document.getElementById("loginPassword");
       
-      // Show loading state
-      const loginBtn = document.getElementById("loginBtn");
-      const originalText = loginBtn.textContent;
-      loginBtn.textContent = "Logging in...";
-      loginBtn.disabled = true;
-      
-      const success = await loginWithFirebase(username, password);
-      
-      if (success) {
+      if (username === "OPS" && password === "0000") {
         modal.classList.remove("error");
         usernameInput.classList.remove("error");
         passwordInput.classList.remove("error");
         document.getElementById("loginError").classList.remove("active");
         
-        // Load data from cloud
-        await loadStateFromCloud();
-        
-        // Setup real-time sync
-        setupRealtimeSync();
-        
         setTimeout(() => {
           document.getElementById("loginModalBackdrop").classList.remove("active");
           document.getElementById("splashScreen").classList.add("hidden");
-          renderBoard();
-          updateMetarFromSettings();
         }, 300);
       } else {
         // Play error sound
@@ -5617,10 +5094,6 @@
         passwordInput.classList.add("error");
         document.getElementById("loginError").classList.add("active");
         document.getElementById("loginPassword").value = "";
-        
-        // Restore button state
-        loginBtn.textContent = originalText;
-        loginBtn.disabled = false;
         
         // Remove error classes after animation
         setTimeout(() => {
@@ -5638,40 +5111,6 @@
     document.getElementById("loginUsername").addEventListener("keypress", (e) => {
       if (e.key === "Enter") document.getElementById("loginPassword").focus();
     });
-
-    /*
-    // TOOL: Calcola hash SHA-256 per password LOCK
-    function showLockHashTool() {
-      const toolDiv = document.createElement('div');
-      toolDiv.style.position = 'fixed';
-      toolDiv.style.bottom = '20px';
-      toolDiv.style.right = '20px';
-      toolDiv.style.background = '#222';
-      toolDiv.style.color = '#fff';
-      toolDiv.style.padding = '16px';
-      toolDiv.style.borderRadius = '12px';
-      toolDiv.style.zIndex = '9999';
-      toolDiv.style.boxShadow = '0 2px 8px #0008';
-      toolDiv.innerHTML = `
-        <div style="font-weight:bold;margin-bottom:8px;">Calcola hash LOCK</div>
-        <input id="lockHashInput" type="text" placeholder="Password" style="padding:6px;border-radius:6px;border:1px solid #444;width:120px;">
-        <button id="lockHashBtn" style="margin-left:8px;padding:6px 12px;border-radius:6px;border:none;background:#3b82f6;color:#fff;">Calcola</button>
-        <div id="lockHashResult" style="margin-top:8px;font-size:0.9rem;word-break:break-all;"></div>
-        <button id="lockHashClose" style="margin-top:8px;padding:4px 10px;border-radius:6px;border:none;background:#ef4444;color:#fff;">Chiudi</button>
-      `;
-      document.body.appendChild(toolDiv);
-      document.getElementById('lockHashBtn').onclick = async () => {
-        const val = document.getElementById('lockHashInput').value;
-        const hash = await hashPassword(val);
-        document.getElementById('lockHashResult').textContent = hash;
-      };
-      document.getElementById('lockHashClose').onclick = () => {
-        toolDiv.remove();
-      };
-    }
-    // Mostra tool all'avvio (puoi togliere questa riga dopo)
-    showLockHashTool();
-    */
   </script>
 </body>
 </html>
