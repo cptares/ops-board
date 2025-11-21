@@ -1749,7 +1749,7 @@
 <body>
   <!-- SPLASH SCREEN -->
   <div class="splash-screen" id="splashScreen">
-    <img src="images/logo/OPS.png" alt="Logo" class="splash-logo">
+    <img src="images/logo/OPS.png" alt="Logo" class="splash-logo" id="mainLogo">
   </div>
 
   <!-- LOGIN MODAL -->
@@ -2526,6 +2526,18 @@
   </div>
 
   <script>
+        // Rendi il logo cliccabile per riaprire la schermata di login
+        document.getElementById('mainLogo').addEventListener('click', () => {
+          document.getElementById('splashScreen').classList.remove('hidden');
+          document.getElementById('splashScreen').classList.remove('slide-up');
+          document.getElementById('loginModalBackdrop').classList.add('active');
+          document.getElementById('loginUsername').value = "";
+          document.getElementById('loginPassword').value = "";
+          document.getElementById('loginError').classList.remove('active');
+          document.getElementById('loginUsername').classList.remove('error');
+          document.getElementById('loginPassword').classList.remove('error');
+          setTimeout(() => document.getElementById('loginUsername').focus(), 100);
+        });
     // ========================================
     // FIREBASE CONFIGURATION & INITIALIZATION
     // ========================================
