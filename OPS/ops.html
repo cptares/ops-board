@@ -2706,7 +2706,43 @@
       originalSaveState();
       saveStateToCloud();
     }
-    
+
+    // --- FIRESTORE SYNC: FLIGHTS ---
+    // Salva tutti i voli dell'aeroporto corrente su Firestore
+    async function saveFlightsToCloud(airport, flights) {
+      try {
+        await db.collection('ops-data').doc('flights').set({ [airport]: flights }, { merge: true });
+        console.log('✈️ Voli salvati su Firestore');
+      } catch (e) {
+        console.error('Errore salvataggio voli su Firestore:', e);
+      }
+    }
+    // Carica tutti i voli da Firestore
+    async function loadFlightsFromCloud(airport) {
+      try {
+        const doc = await db.collection('ops-data').doc('flights').get();
+        if (doc.exists && doc.data()[airport]) {
+          state.airports[airport] = doc.data()[airport];
+          console.log('✈️ Voli caricati da Firestore');
+        } else {
+          state.airports[airport] = [];
+          console.log('Nessun volo trovato su Firestore');
+        }
+        renderBoard();
+      } catch (e) {
+        console.error('Errore caricamento voli da Firestore:', e);
+      }
+    }
+    // Listener realtime per aggiornare la board su tutti i dispositivi
+    function listenFlightsRealtime(airport) {
+      db.collection('ops-data').doc('flights').onSnapshot(doc => {
+        if (doc.exists && doc.data()[airport]) {
+          state.airports[airport] = doc.data()[airport];
+          renderBoard();
+        }
+      });
+    }
+
     // Nasconde TUTTI gli errori/warning da risorse esterne (iframe radar)
     const originalConsoleError = console.error;
     const originalConsoleWarn = console.warn;
@@ -4048,6 +4084,8 @@
 
       state.airports[state.currentAirport] = flights;
       saveState();
+      // salva anche su Firestore
+      saveFlightsToCloud(state.currentAirport, flights);
       closeFlightModal();
       renderBoard();
       renderSelectedFlight(newFlight);
@@ -4162,9 +4200,6 @@
       renderBoard();
       if (selectedFlightIndex === idx) renderSelectedFlight(f);
     }
-
-    document.getElementById("cancelTimeBtn").addEventListener("click", closeTimeModal);
-    // saveTimeBtn removed: saving now happens automatically on input or via CURRENT
 
     // Enter per salvare nel mini modal
     document.getElementById("timeModalInput").addEventListener("keydown", (e) => {
@@ -4317,6 +4352,8 @@
       if (hashedPassword === VALID_CREDENTIALS.DELETE) {
         state.airports[state.currentAirport] = [];
         saveState();
+        // salva anche su Firestore
+        await saveFlightsToCloud(state.currentAirport, []);
         closeDeleteModal();
         renderBoard();
       }
@@ -4353,6 +4390,8 @@
         flights.splice(editingFlightIndex, 1);
         state.airports[state.currentAirport] = flights;
         saveState();
+        // salva anche su Firestore
+        await saveFlightsToCloud(state.currentAirport, flights);
         closeSingleDeleteModal();
         closeFlightModal();
         renderBoard();
