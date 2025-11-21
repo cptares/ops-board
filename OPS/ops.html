@@ -3196,6 +3196,14 @@
       const passwordInput = document.getElementById("lockPasswordInput");
       const overlay = document.getElementById("lockedOverlay");
 
+      const errorMsg = document.createElement("div");
+      errorMsg.id = "lockPasswordError";
+      errorMsg.style.color = "#ef4444";
+      errorMsg.style.fontSize = "1rem";
+      errorMsg.style.marginTop = "10px";
+      errorMsg.style.textAlign = "center";
+      overlay.appendChild(errorMsg);
+
       passwordInput.addEventListener("input", async () => {
         // Load credentials from cloud if not already loaded
         if (!VALID_CREDENTIALS) {
@@ -3203,7 +3211,7 @@
         }
         
         if (!VALID_CREDENTIALS || !VALID_CREDENTIALS.LOCK) {
-          console.error('Unable to load LOCK credential from cloud');
+          errorMsg.textContent = "Errore di connessione al database!";
           return;
         }
         
@@ -3212,6 +3220,11 @@
         if (inputHash === VALID_CREDENTIALS.LOCK) {
           overlay.classList.add("hidden");
           passwordInput.value = "";
+          errorMsg.textContent = "";
+        } else if (passwordInput.value.length >= 4) {
+          errorMsg.textContent = "Password errata";
+        } else {
+          errorMsg.textContent = "";
         }
       });
     }
