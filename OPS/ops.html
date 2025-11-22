@@ -2501,6 +2501,9 @@
     // contesto per mini modal orario
     let timeModalContext = { flightIndex: null, mode: null }; // mode: 'dep' | 'arr'
     let lastMetarTimestamp = null;
+    
+    // Dati del vento correnti per aggiornamento immediato
+    let currentWindData = { qnh: null, windDir: null, windSpeed: null };
 
     function showErrorPopup(message) {
       const backdrop = document.getElementById("errorPopupBackdrop");
@@ -2564,28 +2567,29 @@
       }
     }
 
+    // QNH CHANGE SOUND (breve beep singolo)
+    function playQnhChangeSound() {
+      try {
+        const ctx = getAudioContext();
+        const now = ctx.currentTime;
+        const oscillator = ctx.createOscillator();
+        const gainNode = ctx.createGain();
+        oscillator.connect(gainNode);
+        gainNode.connect(ctx.destination);
+        oscillator.frequency.value = 1200;
+        oscillator.type = 'sine';
+        gainNode.gain.setValueAtTime(0, now);
+        gainNode.gain.linearRampToValueAtTime(0.5, now + 0.05);
+        gainNode.gain.linearRampToValueAtTime(0, now + 0.25);
+        oscillator.start(now);
+        oscillator.stop(now + 0.25);
+      } catch (e) {
+        console.error('Audio context error:', e);
+      }
+    }
+
     // SQUAWK REMINDER SOUND (gentile, come una notifica)
     function playReminderSound() {
-          // QNH CHANGE SOUND (breve beep singolo)
-          function playQnhChangeSound() {
-            try {
-              const ctx = getAudioContext();
-              const now = ctx.currentTime;
-              const oscillator = ctx.createOscillator();
-              const gainNode = ctx.createGain();
-              oscillator.connect(gainNode);
-              gainNode.connect(ctx.destination);
-              oscillator.frequency.value = 1200;
-              oscillator.type = 'sine';
-              gainNode.gain.setValueAtTime(0, now);
-              gainNode.gain.linearRampToValueAtTime(0.5, now + 0.05);
-              gainNode.gain.linearRampToValueAtTime(0, now + 0.25);
-              oscillator.start(now);
-              oscillator.stop(now + 0.25);
-            } catch (e) {
-              console.error('Audio context error:', e);
-            }
-          }
       try {
         const ctx = getAudioContext();
         const now = ctx.currentTime;
@@ -2833,27 +2837,28 @@
       playReminderSound();
     }
 
+    // QNH CHANGE POPUP
+    function showQnhChangePopup(newQnh) {
+      closeAllModals();
+      let backdrop = document.getElementById("qnhChangeBackdrop");
+      if (!backdrop) {
+        backdrop = document.createElement("div");
+        backdrop.id = "qnhChangeBackdrop";
+        backdrop.className = "modal-backdrop";
+        backdrop.innerHTML = `<div class="modal" style="width:340px;text-align:center;animation:qnhPopAnim 0.5s;"><div class="modal-title" style="color:#38bdf8;font-size:2rem;">NEW QNH</div><div style="padding:20px;font-size:1.3rem;font-weight:700;">${newQnh} hPa</div></div>`;
+        document.body.appendChild(backdrop);
+        const style = document.createElement('style');
+        style.innerHTML = `@keyframes qnhPopAnim {0%{transform:scale(0.7);opacity:0;}60%{transform:scale(1.1);opacity:1;}100%{transform:scale(1);opacity:1;}}`;
+        document.head.appendChild(style);
+      } else {
+        backdrop.querySelector('.modal-title').textContent = "NEW QNH";
+        backdrop.querySelector('div[style*="padding:20px"]').textContent = `${newQnh} hPa`;
+      }
+      backdrop.classList.add("active");
+      setTimeout(() => {backdrop.classList.remove("active");}, 2500);
+    }
+
     function showDelayAdvise(flight, flightIndex) {
-          // QNH CHANGE POPUP
-          function showQnhChangePopup(newQnh) {
-            closeAllModals();
-            let backdrop = document.getElementById("qnhChangeBackdrop");
-            if (!backdrop) {
-              backdrop = document.createElement("div");
-              backdrop.id = "qnhChangeBackdrop";
-              backdrop.className = "modal-backdrop";
-              backdrop.innerHTML = `<div class="modal" style="width:340px;text-align:center;animation:qnhPopAnim 0.5s;"><div class="modal-title" style="color:#38bdf8;font-size:2rem;">NEW QNH</div><div style="padding:20px;font-size:1.3rem;font-weight:700;">${newQnh} hPa</div></div>`;
-              document.body.appendChild(backdrop);
-              const style = document.createElement('style');
-              style.innerHTML = `@keyframes qnhPopAnim {0%{transform:scale(0.7);opacity:0;}60%{transform:scale(1.1);opacity:1;}100%{transform:scale(1);opacity:1;}}`;
-              document.head.appendChild(style);
-            } else {
-              backdrop.querySelector('.modal-title').textContent = "NEW QNH";
-              backdrop.querySelector('div[style*="padding:20px"]').textContent = `${newQnh} hPa`;
-            }
-            backdrop.classList.add("active");
-            setTimeout(() => {backdrop.classList.remove("active");}, 2500);
-          }
       closeAllModals(); // Chiudi tutti i modal prima di mostrare delay advise
       const backdrop = document.getElementById("delayModalBackdrop");
       const infoDiv = document.getElementById("delayFlightInfo");
@@ -4370,7 +4375,13 @@
       saveState();
       applyTheme();
       updateMetarSourceTag();
+      
+      // Forza l'aggiornamento immediato di tutta la visualizzazione
       updateMetarFromSettings();
+      
+      // Aggiorna anche la visualizzazione della pista con i dati correnti del vento
+      refreshRunwayDisplay();
+      
       closeSettingsModal();
     }
 
@@ -4380,6 +4391,9 @@
       const qnhEl = document.getElementById("qnhValue");
       const windTextEl = document.getElementById("windText");
       const componentsEl = document.getElementById("componentsText");
+      
+      // Salva i dati del vento correnti nella variabile globale
+      currentWindData = { qnh: qnh, windDir: windDir, windSpeed: windSpd };
 
       // QNH change detection and alert
       if (qnh) {
@@ -4440,6 +4454,12 @@
       } else {
         componentsEl.textContent = "–";
       }
+    }
+
+    // Funzione per forzare l'aggiornamento della visualizzazione della pista con i dati del vento correnti
+    function refreshRunwayDisplay() {
+      // Usa i dati del vento correnti salvati nella variabile globale
+      updateWindAndQnh(currentWindData.qnh, currentWindData.windDir, currentWindData.windSpeed);
     }
 
     function parseMetarString(metar) {
