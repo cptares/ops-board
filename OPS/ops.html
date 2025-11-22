@@ -1692,7 +1692,7 @@
       <div class="panel">
         <div class="panel-header">
           <div class="panel-title">QNH &amp; runway wind</div>
-          <div class="panel-tag" id="metarSourceTag">WINDY: ----</div>
+          <div class="panel-tag" id="metarSourceTag">ECOWITT TOWER</div>
         </div>
 
         <div class="qnh-line">
@@ -2471,7 +2471,11 @@
         metarIcao: "GCLP",
         runwayHeading: 270,
         theme: "dark",
-        radarSource: "adsbexchange"
+        radarSource: "adsbexchange",
+        useEcowitt: true,
+        ecowittMac: "C4:5B:BE:FA:10:66",
+        ecowittApiKey: "38b1bbae-c7ca-4e64-817f-9b136e0b4d2f",
+        ecowittAppKey: "EFB59102B7AE48CA18CB8D6D6D061D4B"
       },
       fleet: [
         { reg: "F-HATI", type: "PIVI" },
@@ -2965,10 +2969,8 @@
     }
 
     function updateMetarSourceTag() {
-      const icao = (state.settings.metarIcao || "----").toUpperCase();
-      document.getElementById("metarSourceTag").textContent = "WINDY: " + icao;
-      const tag2 = document.getElementById("metarRawIcaoTag");
-      if (tag2) tag2.textContent = "WINDY";
+      // Non sovrascrivere i tag - vengono gestiti da updateMetarFromSettings()
+      // che mostra "ECOWITT TOWER" quando usa la stazione meteo
     }
 
     function setCurrentAirport(icao) {
@@ -4400,9 +4402,16 @@
     // ----- METAR & QNH/WIND -----
 
     function updateWindAndQnh(qnh, windDir, windSpd) {
+      console.log('🎯 updateWindAndQnh called with:', { qnh, windDir, windSpd });
+      
       const qnhEl = document.getElementById("qnhValue");
       const windTextEl = document.getElementById("windText");
       const componentsEl = document.getElementById("componentsText");
+      
+      if (!qnhEl || !windTextEl || !componentsEl) {
+        console.error('❌ Elements not found!');
+        return;
+      }
       
       // Salva i dati del vento correnti nella variabile globale
       currentWindData = { qnh: qnh, windDir: windDir, windSpeed: windSpd };
@@ -4410,6 +4419,7 @@
       // QNH change detection and alert
       if (qnh) {
         qnhEl.textContent = `${qnh} hPa`;
+        console.log('✅ QNH updated:', qnh);
         if (state.lastQnh !== null && qnh !== state.lastQnh) {
           showQnhChangePopup(qnh);
           playQnhChangeSound();
@@ -4424,6 +4434,7 @@
           ? "VRB"
           : windDir.toString().padStart(3, "0") + "°";
         windTextEl.textContent = `${dirText} / ${windSpd} kt`;
+        console.log('✅ Wind text updated:', windTextEl.textContent);
       } else {
         windTextEl.textContent = "---";
       }
@@ -4431,24 +4442,33 @@
       const heading = state.settings.runwayHeading ?? 270;
 
       const bar = document.getElementById("runwayBar");
-      bar.style.transform = `translate(-50%, -50%) rotate(${heading}deg)`;
+      if (bar) {
+        bar.style.transform = `translate(-50%, -50%) rotate(${heading}deg)`;
+      }
 
       const rwy1 = Math.round((heading % 360) / 10).toString().padStart(2, "0");
       const rwy2 = Math.round(((heading + 180) % 360) / 10).toString().padStart(2, "0");
-      document.getElementById("rwText").textContent = `${rwy1} / ${rwy2} (${heading}°)`;
+      const rwTextEl = document.getElementById("rwText");
+      if (rwTextEl) {
+        rwTextEl.textContent = `${rwy1} / ${rwy2} (${heading}°)`;
+      }
+      
       // show numbers inverted on the diagram so they appear at the correct runway ends
-      document.getElementById("rwLabelTop").textContent = rwy2;
-      document.getElementById("rwLabelBottom").textContent = rwy1;
+      const rwTopEl = document.getElementById("rwLabelTop");
+      const rwBottomEl = document.getElementById("rwLabelBottom");
+      if (rwTopEl) rwTopEl.textContent = rwy2;
+      if (rwBottomEl) rwBottomEl.textContent = rwy1;
 
       const arrow = document.getElementById("windArrow");
-      if (windSpd != null && windDir != null) {
-        arrow.style.opacity = "1";
-            arrow.style.transform =
-              `translateX(-50%) rotate(${windDir}deg)`;
-      } else {
-        arrow.style.opacity = "0.4";
-            arrow.style.transform =
-              `translateX(-50%) rotate(0deg)`;
+      if (arrow) {
+        if (windSpd != null && windDir != null) {
+          arrow.style.opacity = "1";
+          arrow.style.transform = `translateX(-50%) rotate(${windDir}deg)`;
+          console.log('✅ Wind arrow updated:', windDir + '°');
+        } else {
+          arrow.style.opacity = "0.4";
+          arrow.style.transform = `translateX(-50%) rotate(0deg)`;
+        }
       }
 
       if (windSpd != null && windDir != null) {
@@ -4463,6 +4483,7 @@
         else crossLabel = `XW ${Math.abs(cross)} kt L`;
 
         componentsEl.textContent = `${headLabel} · ${crossLabel}`;
+        console.log('✅ Components updated:', componentsEl.textContent);
       } else {
         componentsEl.textContent = "–";
       }
@@ -4497,6 +4518,109 @@
         }
       }
       return result;
+    }
+
+    // Variabile globale per salvare l'ultimo vento Ecowitt
+    let lastEcowittWind = { dir: null, speed: null };
+    
+    // Funzione per aggiornare SOLO IL VENTO da Ecowitt
+    async function updateWindFromEcowitt() {
+      const mac = state.settings.ecowittMac || "C4:5B:BE:FA:10:66";
+      const apiKey = state.settings.ecowittApiKey || "38b1bbae-c7ca-4e64-817f-9b136e0b4d2f";
+      const appKey = state.settings.ecowittAppKey || "EFB59102B7AE48CA18CB8D6D6D061D4B";
+      
+      try {
+        // URL API Ecowitt - prova senza proxy prima
+        const url = `https://api.ecowitt.net/api/v3/device/real_time?application_key=${appKey}&api_key=${apiKey}&mac=${mac}&call_back=all&temp_unitid=1&pressure_unitid=3&wind_speed_unitid=7&rainfall_unitid=12&solar_irradiance_unitid=16`;
+        
+        const resp = await fetch(url);
+        
+        if (!resp.ok) {
+          throw new Error(`HTTP ${resp.status}`);
+        }
+        
+        const data = await resp.json();
+        
+        if (data && data.code === 0 && data.data) {
+          let windDir = null;
+          let windSpeed = null;
+          
+          // Cerca direzione vento (in gradi)
+          if (data.data.wind && data.data.wind.wind_direction) {
+            windDir = Math.round(parseFloat(data.data.wind.wind_direction.value));
+          }
+          
+          // Cerca velocità vento (API restituisce km/h, convertiamo a knots)
+          if (data.data.wind && data.data.wind.wind_speed) {
+            const kmh = parseFloat(data.data.wind.wind_speed.value);
+            windSpeed = Math.round(kmh * 0.539957); // km/h to knots
+          }
+          
+          if (windDir !== null && windSpeed !== null) {
+            // Salva gli ultimi valori Ecowitt
+            lastEcowittWind = { dir: windDir, speed: windSpeed };
+            
+            // Aggiorna il display del vento
+            updateWindDisplay(windDir, windSpeed);
+            
+            // Aggiorna il tag
+            const metarSourceTag = document.getElementById("metarSourceTag");
+            if (metarSourceTag) {
+              metarSourceTag.textContent = `ECOWITT ${windDir}°/${windSpeed}KT`;
+            }
+            
+            return true;
+          }
+        }
+      } catch (e) {
+        // Silently fail
+      }
+      
+      return false;
+    }
+    
+    // Funzione per aggiornare SOLO il display del vento (non QNH)
+    function updateWindDisplay(windDir, windSpd) {
+      const windTextEl = document.getElementById("windText");
+      const componentsEl = document.getElementById("componentsText");
+      const arrow = document.getElementById("windArrow");
+      
+      if (!windTextEl || !componentsEl || !arrow) return;
+      
+      // Aggiorna testo vento
+      if (windSpd != null && windDir != null) {
+        const dirText = windDir.toString().padStart(3, "0") + "°";
+        windTextEl.textContent = `${dirText} / ${windSpd} kt`;
+      } else {
+        windTextEl.textContent = "---";
+      }
+      
+      // Aggiorna freccia
+      if (windSpd != null && windDir != null) {
+        arrow.style.opacity = "1";
+        arrow.style.transform = `translateX(-50%) rotate(${windDir}deg)`;
+      } else {
+        arrow.style.opacity = "0.4";
+        arrow.style.transform = `translateX(-50%) rotate(0deg)`;
+      }
+      
+      // Aggiorna componenti
+      const heading = state.settings.runwayHeading ?? 270;
+      if (windSpd != null && windDir != null) {
+        const diffRad = (windDir - heading) * Math.PI / 180;
+        const head = Math.round(windSpd * Math.cos(diffRad));
+        const cross = Math.round(windSpd * Math.sin(diffRad));
+
+        const headLabel = head >= 0 ? `HD +${head} kt` : `TAIL ${Math.abs(head)} kt`;
+        let crossLabel;
+        if (cross === 0) crossLabel = "XW 0 kt";
+        else if (cross > 0) crossLabel = `XW ${cross} kt R`;
+        else crossLabel = `XW ${Math.abs(cross)} kt L`;
+
+        componentsEl.textContent = `${headLabel} · ${crossLabel}`;
+      } else {
+        componentsEl.textContent = "–";
+      }
     }
 
     async function fetchMetarWithFallback(icao) {
@@ -4541,35 +4665,53 @@
       const icao = (state.settings.metarIcao || "GCLP").toUpperCase();
       const metarOut = document.getElementById("metarRawText");
       const tafOut = document.getElementById("tafRawText");
+      const metarSourceTag = document.getElementById("metarSourceTag");
+      const metarRawIcaoTag = document.getElementById("metarRawIcaoTag");
 
-      // Fetch METAR
+      // Sempre fetch METAR per QNH e display
       const metarResult = await fetchMetarWithFallback(icao);
-
-      if (!metarResult.ok || !metarResult.text) {
-        metarOut.textContent = "METAR Loading or N/A";
-        updateWindAndQnh(null, null, null);
-      } else {
-        const lines = metarResult.text
-          .trim()
-          .split("\n")
-          .map(l => l.trim())
-          .filter(l => l.length > 0);
-
+      
+      if (metarResult.ok && metarResult.text) {
+        const lines = metarResult.text.trim().split("\n").map(l => l.trim()).filter(l => l.length > 0);
         const metarLine = lines.length ? lines[lines.length - 1] : null;
-
-        if (!metarLine) {
-          metarOut.textContent = "METAR N/A";
-          updateWindAndQnh(null, null, null);
-        } else {
+        
+        if (metarLine) {
           metarOut.textContent = metarLine;
-          lastMetarTimestamp = Date.now();
-
           const parsed = parseMetarString(metarLine);
-          updateWindAndQnh(parsed.qnh, parsed.windDir, parsed.windSpeed);
+          
+          // Aggiorna solo QNH dal METAR
+          if (parsed.qnh) {
+            const qnhEl = document.getElementById("qnhValue");
+            if (qnhEl) {
+              qnhEl.textContent = `${parsed.qnh} hPa`;
+              
+              // QNH change detection
+              if (state.lastQnh !== null && parsed.qnh !== state.lastQnh) {
+                showQnhChangePopup(parsed.qnh);
+                playQnhChangeSound();
+              }
+              state.lastQnh = parsed.qnh;
+            }
+          }
+          
+          // Dopo aver aggiornato il QNH, ri-applica il vento da Ecowitt per evitare che il METAR lo sovrascriva
+          if (lastEcowittWind.dir !== null && lastEcowittWind.speed !== null) {
+            updateWindDisplay(lastEcowittWind.dir, lastEcowittWind.speed);
+            
+            const metarSourceTag = document.getElementById("metarSourceTag");
+            if (metarSourceTag) {
+              metarSourceTag.textContent = `ECOWITT ${lastEcowittWind.dir}°/${lastEcowittWind.speed}KT`;
+            }
+          }
         }
       }
-
+      
       // Fetch TAF
+      await fetchAndDisplayTaf(icao, tafOut);
+    }
+    
+    // Funzione per fetch e display TAF (fuori da updateMetarFromSettings)
+    async function fetchAndDisplayTaf(icao, tafOut) {
       const tafResult = await fetchTafWithFallback(icao);
 
       if (!tafResult.ok || !tafResult.text) {
@@ -5013,13 +5155,26 @@
     }
 
     // --------- INIT ---------
+    console.log('🚀 Initializing OPS Board...');
     loadState();
+    console.log('⚙️ Settings loaded:', state.settings);
     applyTheme();
     updateMetarSourceTag();
     setCurrentAirport(state.currentAirport);
     renderBoard();
+    
+    // Test immediato per vedere se gli elementi esistono
+    console.log('🔍 Checking wind panel elements...');
+    console.log('- qnhValue:', document.getElementById("qnhValue"));
+    console.log('- windText:', document.getElementById("windText"));
+    console.log('- windArrow:', document.getElementById("windArrow"));
+    
     updateWindAndQnh(null, null, null);
+    
+    // Forza aggiornamento immediato: QNH dal METAR + Vento da Ecowitt
+    console.log('🌤️ Starting initial weather update...');
     updateMetarFromSettings();
+    
     updateUtcClock();
     updateSunriseSunset();
     initLockPassword();
@@ -5049,8 +5204,16 @@
     
     setInterval(updateAutoRefreshCountdown, 1000);
 
-    // METAR ogni 5 minuti
-    setInterval(updateMetarFromSettings, 5 * 60 * 1000);
+    // METAR (QNH) ogni 60 secondi
+    setInterval(updateMetarFromSettings, 60 * 1000);
+    
+    // Ecowitt VENTO ogni secondo - aggiornamento in tempo reale
+    const useEcowitt = state.settings.useEcowitt !== false;
+    
+    if (useEcowitt) {
+      setInterval(updateWindFromEcowitt, 1000);
+      updateWindFromEcowitt();
+    }
 
     // Sunrise/Sunset ogni 30 minuti
     setInterval(updateSunriseSunset, 30 * 60 * 1000);
