@@ -4521,7 +4521,7 @@
     }
 
     // Variabile globale per salvare l'ultimo vento Ecowitt
-    let lastEcowittWind = { dir: null, speed: null };
+    let lastEcowittWind = { dir: null, speed: null, gust: null };
     
     // Funzione per aggiornare SOLO IL VENTO da Ecowitt
     async function updateWindFromEcowitt() {
@@ -4556,17 +4556,25 @@
             windSpeed = Math.round(kmh * 0.539957); // km/h to knots
           }
           
+          // Cerca raffica vento (gust)
+          let windGust = null;
+          if (data.data.wind && data.data.wind.wind_gust) {
+            const gustKmh = parseFloat(data.data.wind.wind_gust.value);
+            windGust = Math.round(gustKmh * 0.539957); // km/h to knots
+          }
+          
           if (windDir !== null && windSpeed !== null) {
             // Salva gli ultimi valori Ecowitt
-            lastEcowittWind = { dir: windDir, speed: windSpeed };
+            lastEcowittWind = { dir: windDir, speed: windSpeed, gust: windGust };
             
             // Aggiorna il display del vento
-            updateWindDisplay(windDir, windSpeed);
+            updateWindDisplay(windDir, windSpeed, windGust);
             
             // Aggiorna il tag
             const metarSourceTag = document.getElementById("metarSourceTag");
             if (metarSourceTag) {
-              metarSourceTag.textContent = `ECOWITT ${windDir}°/${windSpeed}KT`;
+              const gustText = windGust ? `G${windGust}` : '';
+              metarSourceTag.textContent = `ECOWITT ${windDir}°/${windSpeed}${gustText}KT`;
             }
             
             return true;
@@ -4580,7 +4588,7 @@
     }
     
     // Funzione per aggiornare SOLO il display del vento (non QNH)
-    function updateWindDisplay(windDir, windSpd) {
+    function updateWindDisplay(windDir, windSpd, windGust) {
       const windTextEl = document.getElementById("windText");
       const componentsEl = document.getElementById("componentsText");
       const arrow = document.getElementById("windArrow");
@@ -4590,7 +4598,8 @@
       // Aggiorna testo vento
       if (windSpd != null && windDir != null) {
         const dirText = windDir.toString().padStart(3, "0") + "°";
-        windTextEl.textContent = `${dirText} / ${windSpd} kt`;
+        const gustText = (windGust != null && windGust > windSpd) ? ` G${windGust}` : '';
+        windTextEl.textContent = `${dirText} / ${windSpd}${gustText} kt`;
       } else {
         windTextEl.textContent = "---";
       }
@@ -4696,11 +4705,12 @@
           
           // Dopo aver aggiornato il QNH, ri-applica il vento da Ecowitt per evitare che il METAR lo sovrascriva
           if (lastEcowittWind.dir !== null && lastEcowittWind.speed !== null) {
-            updateWindDisplay(lastEcowittWind.dir, lastEcowittWind.speed);
+            updateWindDisplay(lastEcowittWind.dir, lastEcowittWind.speed, lastEcowittWind.gust);
             
             const metarSourceTag = document.getElementById("metarSourceTag");
             if (metarSourceTag) {
-              metarSourceTag.textContent = `ECOWITT ${lastEcowittWind.dir}°/${lastEcowittWind.speed}KT`;
+              const gustText = lastEcowittWind.gust ? `G${lastEcowittWind.gust}` : '';
+              metarSourceTag.textContent = `ECOWITT ${lastEcowittWind.dir}°/${lastEcowittWind.speed}${gustText}KT`;
             }
           }
         }
