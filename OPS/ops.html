@@ -2845,17 +2845,29 @@
         backdrop = document.createElement("div");
         backdrop.id = "qnhChangeBackdrop";
         backdrop.className = "modal-backdrop";
-        backdrop.innerHTML = `<div class="modal" style="width:340px;text-align:center;animation:qnhPopAnim 0.5s;"><div class="modal-title" style="color:#38bdf8;font-size:2rem;">NEW QNH</div><div style="padding:20px;font-size:1.3rem;font-weight:700;">${newQnh} hPa</div></div>`;
+        backdrop.innerHTML = `
+          <div class="modal delay-modal" style="max-width:500px;width:90%;animation:qnhPopAnim 0.5s;">
+            <div class="delay-modal-title">⚠️ NEW QNH ⚠️</div>
+            <div class="delay-modal-subtitle">QNH value has changed</div>
+            <div class="delay-flight-info">
+              <div class="delay-info-row">
+                <span class="delay-info-label">NEW QNH</span>
+                <span class="delay-info-value">${newQnh} hPa</span>
+              </div>
+            </div>
+            <div class="delay-modal-footer">
+              <button class="delay-dismiss-btn" onclick="document.getElementById('qnhChangeBackdrop').classList.remove('active')">OK, GOT IT</button>
+            </div>
+          </div>
+        `;
         document.body.appendChild(backdrop);
         const style = document.createElement('style');
         style.innerHTML = `@keyframes qnhPopAnim {0%{transform:scale(0.7);opacity:0;}60%{transform:scale(1.1);opacity:1;}100%{transform:scale(1);opacity:1;}}`;
         document.head.appendChild(style);
       } else {
-        backdrop.querySelector('.modal-title').textContent = "NEW QNH";
-        backdrop.querySelector('div[style*="padding:20px"]').textContent = `${newQnh} hPa`;
+        backdrop.querySelector('.delay-info-value').textContent = `${newQnh} hPa`;
       }
       backdrop.classList.add("active");
-      setTimeout(() => {backdrop.classList.remove("active");}, 2500);
     }
 
     function showDelayAdvise(flight, flightIndex) {
