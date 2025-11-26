@@ -777,6 +777,11 @@
     table.board tr.selected { background: rgba(59, 130, 246, 0.5); }
     table.board tr.highlighted { background: rgba(245, 158, 11, 0.3) !important; }
     table.board tr.highlighted:hover { background: rgba(245, 158, 11, 0.4) !important; }
+    table.board tr.recent-update { animation: flashUpdate 2s ease-in-out; }
+    @keyframes flashUpdate {
+      0% { background: rgba(34,197,94,0.4); }
+      100% { background: transparent; }
+    }
 
     .eobt-time {
       display: inline-block;
@@ -838,6 +843,11 @@
       background: rgba(139, 92, 246, 0.2);
       color: #c4b5fd;
       border: 1px solid rgba(139, 92, 246, 0.8);
+    }
+    .status-completed {
+      background: rgba(56, 189, 248, 0.25);
+      color: #7dd3fc;
+      border: 1px solid rgba(56, 189, 248, 0.9);
     }
 
     .status-cancel {
@@ -1786,12 +1796,13 @@
         <div class="airport-controls">
           <div class="controls-wrapper" id="controlsWrapper">
             <span class="refresh-countdown" id="refreshCountdown">Refresh in 60s</span>
+              <span class="refresh-countdown" id="flightSyncStatus" style="display:none;">Syncing…</span>
             <button class="add-flight-btn" id="addFlightBtn">+ ADD FLIGHT</button>
             <button class="delete-btn" id="deleteFlightsBtn">🗑</button>
           </div>
           <div class="controls-hidden" id="controlsHidden">
             <button class="settings-btn" id="radarBtn">📡</button>
-            <button class="settings-btn" id="flightloggerBtn">📅</button>
+            <!-- FlightLogger manual import button removed: auto-sync active -->
             <button class="settings-btn" id="simbriefBtn">✈️</button>
             <button class="settings-btn" id="calcBtn">🔢</button>
             <button class="settings-btn" id="settingsBtn">⚙</button>
@@ -1867,7 +1878,7 @@
               <th>Dep</th>
               <th>Arr</th>
               <th>Reg</th>
-              <th>EOBT</th>
+              <th>ATA</th>
               <th>Status</th>
               <th>Squawk</th>
               <th>Quick ops</th>
@@ -1926,7 +1937,8 @@
       <div class="modal-row">
         <div>
           <div class="modal-label">Reg (mandatory)</div>
-          <select id="flightRegSelect"></select>
+          <!-- Changed from select (fleet dropdown) to free text input per request -->
+          <input id="flightRegInput" placeholder="REG" maxlength="10" style="text-transform:uppercase;" />
         </div>
         <div>
           <div class="modal-label">Callsign (mandatory)</div>
@@ -1937,17 +1949,11 @@
       <div class="modal-row" style="margin-top:6px;">
         <div>
           <div class="modal-label">Dep airport (ICAO)</div>
-          <div style="display:flex;gap:6px;align-items:center;">
-            <select id="flightDepAirportInput" style="flex:1 1 auto;"></select>
-            <input id="flightDepAirportCustomInput" maxlength="4" placeholder="ICAO" style="width:90px;" />
-          </div>
+          <input id="flightDepAirportInput" placeholder="ICAO" style="text-transform:uppercase;" />
         </div>
         <div>
           <div class="modal-label">Arr airport (ICAO)</div>
-          <div style="display:flex;gap:6px;align-items:center;">
-            <select id="flightArrAirportInput" style="flex:1 1 auto;"></select>
-            <input id="flightArrAirportCustomInput" maxlength="4" placeholder="ICAO" style="width:90px;" />
-          </div>
+          <input id="flightArrAirportInput" placeholder="ICAO" style="text-transform:uppercase;" />
         </div>
       </div>
 
@@ -2050,54 +2056,7 @@
         </div>
       </div>
 
-      <div class="locked-sections-container">
-        <div class="locked-overlay" id="lockedOverlay">
-          <div class="lock-icon">🔒</div>
-          <input type="password" 
-                 class="lock-password-input" 
-                 id="lockPasswordInput" 
-                 placeholder="****" 
-                 maxlength="4">
-        </div>
 
-        <div class="settings-section">
-          <div class="settings-section-title">Airport database</div>
-        <div class="fleet-list" id="airportList"></div>
-
-        <div class="modal-row" style="margin-top:6px;">
-          <div>
-            <div class="modal-label">ICAO code</div>
-            <input id="airportNewIcaoInput" maxlength="4" placeholder="ICAO">
-          </div>
-          <div>
-            <div class="modal-label">Airport name</div>
-            <input id="airportNewNameInput" placeholder="Airport Name">
-          </div>
-        </div>
-        <div class="modal-footer" style="justify-content:flex-start;margin-top:6px;">
-          <button class="btn-secondary" id="airportAddBtn">Add airport</button>
-        </div>
-      </div>
-
-      <div class="settings-section">
-        <div class="settings-section-title">Fleet editor</div>
-        <div class="fleet-list" id="fleetList"></div>
-
-        <div class="modal-row" style="margin-top:6px;">
-          <div>
-            <div class="modal-label">New reg</div>
-            <input id="fleetNewRegInput" placeholder="Registration">
-          </div>
-          <div>
-            <div class="modal-label">Type</div>
-            <input id="fleetNewTypeInput" placeholder="Aircraft Type">
-          </div>
-        </div>
-        <div class="modal-footer" style="justify-content:flex-start;margin-top:6px;">
-          <button class="btn-secondary" id="fleetAddBtn">Add to fleet</button>
-        </div>
-      </div>
-      </div>
 
       <div class="modal-footer" style="margin-top:10px;">
         <button class="btn-secondary" id="cancelSettingsBtn">Close</button>
@@ -2123,25 +2082,6 @@
     </div>
   </div>
 
-  <!-- MODAL: EDIT FLEET -->
-  <div class="modal-backdrop" id="editFleetModalBackdrop">
-    <div class="modal" style="width:320px;">
-      <div class="modal-title">Edit Aircraft</div>
-      <div class="form-row">
-        <label for="editFleetRegInput">Registration</label>
-        <input type="text" id="editFleetRegInput" style="text-transform:uppercase;" maxlength="10" />
-      </div>
-      <div class="form-row">
-        <label for="editFleetTypeInput">Type</label>
-        <input type="text" id="editFleetTypeInput" maxlength="10" />
-      </div>
-      <div class="error-text" id="editFleetError" style="display:none;"></div>
-      <div class="modal-buttons">
-        <button class="btn-secondary" id="cancelEditFleetBtn">Cancel</button>
-        <button class="btn-primary" id="saveEditFleetBtn">Save</button>
-      </div>
-    </div>
-  </div>
 
   <!-- MINI MODAL PER SQUAWK (inserire 4 cifre) -->
   <div class="modal-backdrop" id="squawkModalBackdrop">
@@ -2290,22 +2230,7 @@
     </div>
   </div>
 
-  <!-- MODAL FLIGHTLOGGER -->
-  <div class="modal-backdrop" id="flightloggerModalBackdrop">
-    <div class="modal" style="width:90vw;max-width:1400px;height:88vh;" id="flightloggerModal">
-      <div class="modal-title">FlightLogger Bookings</div>
-      <div style="height:calc(100% - 60px);margin-top:8px;border-radius:12px;overflow:hidden;background:#0a0a0a;">
-        <iframe id="flightloggerIframe" 
-                src="" 
-                style="width:100%;height:100%;border:none;"
-                loading="lazy">
-        </iframe>
-      </div>
-      <div class="modal-footer" style="margin-top:8px;">
-        <button class="btn-secondary" id="closeFlightloggerBtn">Close</button>
-      </div>
-    </div>
-  </div>
+  <!-- FlightLogger manual import modal removed: auto-sync handles ingestion -->
 
   <!-- ERROR POPUP -->
   <div class="modal-backdrop" id="errorPopupBackdrop">
@@ -2366,12 +2291,15 @@
         </div>
 
         <div>
-          <div class="field-label">ATD</div>
+          <div class="field-label">AOBT</div>
           <div class="field-value muted" id="acDep">–</div>
         </div>
         <div>
           <div class="field-label">ATA</div>
           <div class="field-value muted" id="acArr">–</div>
+        </div>
+        <div>
+          <!-- Completed removed: manual AOBT/ATA only -->
         </div>
       </div>
 
@@ -2628,17 +2556,22 @@
     // TIME CALCULATOR FUNCTIONS
     // Chiude tutti i modal aperti
     function closeAllModals() {
-      document.getElementById("calcModalBackdrop").classList.remove("active");
-      document.getElementById("flightModalBackdrop").classList.remove("active");
-      document.getElementById("deleteModalBackdrop").classList.remove("active");
-      document.getElementById("deleteSingleModalBackdrop").classList.remove("active");
-      document.getElementById("settingsModalBackdrop").classList.remove("active");
-      document.getElementById("radarModalBackdrop").classList.remove("active");
-      document.getElementById("simbriefModalBackdrop").classList.remove("active");
-      document.getElementById("flightloggerModalBackdrop").classList.remove("active");
-      document.getElementById("squawkModalBackdrop").classList.remove("active");
-      document.getElementById("timeModalBackdrop").classList.remove("active");
-      document.getElementById("editFleetModalBackdrop").classList.remove("active");
+      const modals = [
+        "calcModalBackdrop",
+        "flightModalBackdrop",
+        "deleteModalBackdrop",
+        "deleteSingleModalBackdrop",
+        "settingsModalBackdrop",
+        "radarModalBackdrop",
+        "simbriefModalBackdrop",
+        "flightloggerModalBackdrop",
+        "squawkModalBackdrop",
+        "timeModalBackdrop"
+      ];
+      modals.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.remove("active");
+      });
       // Non chiudo i modal di notifica (delay/squawk reminder) qui perché hanno priorità
     }
 
@@ -2909,18 +2842,7 @@
       playDelaySound();
     }
 
-    function initLockPassword() {
-      const passwordInput = document.getElementById("lockPasswordInput");
-      const overlay = document.getElementById("lockedOverlay");
-      const correctPassword = "2304";
-
-      passwordInput.addEventListener("input", () => {
-        if (passwordInput.value === correctPassword) {
-          overlay.classList.add("hidden");
-          passwordInput.value = "";
-        }
-      });
-    }
+    // initLockPassword removed - no longer needed
 
     function loadState() {
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -2989,6 +2911,7 @@
       else if (statusObj.type === "DEPARTED") span.classList.add("status-departed");
       else if (statusObj.type === "IN FLIGHT") span.classList.add("status-in-flight");
       else if (statusObj.type === "LANDED") span.classList.add("status-landed");
+      else if (statusObj.type === "COMPLETED") span.classList.add("status-completed");
       else span.classList.add("status-on-time");
       span.textContent = statusObj.label;
       return span;
@@ -3017,9 +2940,11 @@
     function computeFlightStatus(flight) {
       const now = new Date();
       const nowMinutes = now.getUTCHours() * 60 + now.getUTCMinutes();
-
-      if (flight.cancelled) return { type: "CANCEL", label: "CANCEL" };
-      if (flight.landed)    return { type: "LANDED",  label: "LANDED" };
+      const remoteStatus = (flight.sourceStatus || "").toUpperCase();
+      // Priority: CANCEL > COMPLETED (remote) > LANDED (manual) > DEPARTED/IN FLIGHT > ON TIME/DELAY
+      if (flight.cancelled || remoteStatus === 'CANCELLED') return { type: "CANCEL", label: "CANCEL" };
+      if (remoteStatus === 'COMPLETED') return { type: "COMPLETED", label: "COMPLETED" };
+      if (flight.landed) return { type: "LANDED",  label: "LANDED" };
       
       // Se departed, controlla se sono passati 5+ minuti
       if (flight.departed) {
@@ -3170,25 +3095,33 @@
       // Categorize flights by status
       const scheduledFlights = []; // ON TIME, DELAY, CANCEL
       const inflightFlights = [];  // DEPARTED, IN FLIGHT
-      const groundedFlights = [];  // LANDED
-      
+      const groundedCompleted = []; // COMPLETED (remote closure)
+      const groundedLanded = [];    // LANDED (manual arrival time)
+
       flights.forEach(flight => {
         const statusObj = computeFlightStatus(flight);
-        
-        if (statusObj.type === "LANDED") {
-          groundedFlights.push(flight);
-        } else if (statusObj.type === "DEPARTED" || statusObj.type === "IN FLIGHT") {
-          inflightFlights.push(flight);
-        } else {
-          // ON TIME, DELAY, CANCEL, UNKNOWN
-          scheduledFlights.push(flight);
+        switch (statusObj.type) {
+          case 'COMPLETED':
+            groundedCompleted.push(flight); break;
+          case 'LANDED':
+            groundedLanded.push(flight); break;
+          case 'DEPARTED':
+          case 'IN FLIGHT':
+            inflightFlights.push(flight); break;
+          default:
+            scheduledFlights.push(flight); break;
         }
       });
-      
+
+      // Order grounded: COMPLETED first then LANDED
+      const groundedOrdered = [...groundedCompleted, ...groundedLanded];
+      // Mantiene compatibilità con riferimenti esistenti
+      const groundedFlights = groundedOrdered;
+
       // Render each category
       renderFlightSection(scheduledFlights, scheduledTbody, "scheduled");
       renderFlightSection(inflightFlights, inflightTbody, "inflight");
-      renderFlightSection(groundedFlights, groundedTbody, "grounded");
+      renderFlightSection(groundedOrdered, groundedTbody, "grounded");
       
       // Update empty messages
       document.getElementById("scheduledEmptyMsg").style.display = scheduledFlights.length ? "none" : "block";
@@ -3218,6 +3151,7 @@
         
         if (originalIdx === selectedFlightIndex) tr.classList.add("selected");
         if (f.highlighted) tr.classList.add("highlighted");
+        if (f._justUpdated && Date.now() - f._justUpdated < 8000) tr.classList.add("recent-update");
 
         function cell(text, title) {
           const td = document.createElement("td");
@@ -3244,31 +3178,37 @@
           eobtDisplay += " " + minutesDiffString(eMin, actualDelayMin);
         }
 
+        // Order base: Callsign | Dep | Arr | Reg | TimeCol | Status | Squawk | Quick ops
         tr.appendChild(cell(f.callsign));
         tr.appendChild(cell(f.depAirport || "–"));
         tr.appendChild(cell(f.arrAirport || "–"));
         tr.appendChild(cell(f.reg || "–"));
 
-        // EOBT con cerchio azzurro (opaco se on-time, più intenso se delay)
-        // Se il volo è CANCEL, non mostrare EOBT
-        // Se c'è delayEobt, mostralo al posto dell'EOBT originale con colore delay
-        const tdEobt = document.createElement("td");
-        if (statusObj.type === "CANCEL") {
-          tdEobt.textContent = "";
-        } else {
-          const eobtSpan = document.createElement("span");
-          eobtSpan.className = "eobt-time";
-          
-          // Se c'è delayEobt valido, mostralo con stile delay
-          if (dMin !== null && dMin > eMin) {
-            eobtSpan.classList.add("delayed");
-            eobtSpan.textContent = f.delayEobt || "–";
+        const tdTime = document.createElement("td");
+        if (sectionType === "grounded") {
+          // Show ATA (arrival time) only if landed manually
+          if (statusObj.type === "CANCEL") {
+            tdTime.textContent = "";
           } else {
-            eobtSpan.textContent = f.eobt || "–";
+            tdTime.textContent = (f.landed && f.arr) ? f.arr : "–";
           }
-          tdEobt.appendChild(eobtSpan);
+        } else {
+          // Scheduled / Inflight tables keep EOBT logic
+          if (statusObj.type === "CANCEL") {
+            tdTime.textContent = "";
+          } else {
+            const eobtSpan = document.createElement("span");
+            eobtSpan.className = "eobt-time";
+            if (dMin !== null && dMin > eMin) {
+              eobtSpan.classList.add("delayed");
+              eobtSpan.textContent = f.delayEobt || "–";
+            } else {
+              eobtSpan.textContent = f.eobt || "–";
+            }
+            tdTime.appendChild(eobtSpan);
+          }
         }
-        tr.appendChild(tdEobt);
+        tr.appendChild(tdTime);
 
         const tdStatus = document.createElement("td");
         tdStatus.appendChild(statusPill(statusObj));
@@ -3328,54 +3268,49 @@
 
         // QUICK OPS: edit + dep + arr
         const tdOps = document.createElement("td");
+        const makeBtn = (text, title, handler) => {
+          const b = document.createElement("button");
+          b.className = "quickops-btn";
+          b.textContent = text;
+          b.title = title;
+          b.addEventListener("click", (ev) => { ev.stopPropagation(); handler(ev); });
+          return b;
+        };
 
-        const btnEdit = document.createElement("button");
-        btnEdit.className = "quickops-btn";
-        btnEdit.textContent = "⚙";
-        btnEdit.title = "Edit flight";
-        btnEdit.addEventListener("click", (ev) => {
-          ev.stopPropagation();
-          openFlightModal("edit", originalIdx);
-        });
+        const btnEdit = makeBtn("⚙", "Edit flight", () => openFlightModal("edit", originalIdx));
 
-        const btnDep = document.createElement("button");
-        btnDep.className = "quickops-btn";
-        btnDep.textContent = "🛫";
-        btnDep.title = "Set departure time (DEPARTED)";
-        btnDep.addEventListener("click", (ev) => {
-          ev.stopPropagation();
-          openTimeModal(originalIdx, "dep");
-        });
+        if (statusObj.type === "CANCEL") {
+          tdOps.appendChild(btnEdit); // Only edit allowed for cancelled flights
+        } else {
+          const btnAlert = makeBtn(f.highlighted ? "⚠️" : "🔔", f.highlighted ? "Remove highlight" : "Highlight flight for monitoring", () => {
+            const flightsLocal = state.airports[state.currentAirport] || [];
+            const flightLocal = flightsLocal[originalIdx];
+            if (!flightLocal) return;
+            flightLocal.highlighted = !flightLocal.highlighted;
+            saveState();
+            renderBoard();
+            if (selectedFlightIndex === originalIdx) renderSelectedFlight(flightLocal);
+          });
+          btnAlert.style.background = f.highlighted ? "rgba(245, 158, 11, 0.3)" : "transparent";
+          const btnDep = makeBtn("🛫", "Set departure time (DEPARTED)", () => openTimeModal(originalIdx, "dep"));
+          const btnArr = makeBtn("🛬", "Set landing time (LANDED)", () => openTimeModal(originalIdx, "arr"));
 
-        const btnArr = document.createElement("button");
-        btnArr.className = "quickops-btn";
-        btnArr.textContent = "🛬";
-        btnArr.title = "Set landing time (LANDED)";
-        btnArr.addEventListener("click", (ev) => {
-          ev.stopPropagation();
-          openTimeModal(originalIdx, "arr");
-        });
-
-        const btnAlert = document.createElement("button");
-        btnAlert.className = "quickops-btn";
-        btnAlert.textContent = f.highlighted ? "⚠️" : "🔔";
-        btnAlert.title = f.highlighted ? "Remove highlight" : "Highlight flight for monitoring";
-        btnAlert.style.background = f.highlighted ? "rgba(245, 158, 11, 0.3)" : "transparent";
-        btnAlert.addEventListener("click", (ev) => {
-          ev.stopPropagation();
-          const flightsLocal = state.airports[state.currentAirport] || [];
-          const flightLocal = flightsLocal[originalIdx];
-          if (!flightLocal) return;
-          flightLocal.highlighted = !flightLocal.highlighted;
-          saveState();
-          renderBoard();
-          if (selectedFlightIndex === originalIdx) renderSelectedFlight(flightLocal);
-        });
-
-        tdOps.appendChild(btnEdit);
-        tdOps.appendChild(btnDep);
-        tdOps.appendChild(btnArr);
-        tdOps.appendChild(btnAlert);
+          tdOps.appendChild(btnEdit);
+          if (sectionType === "scheduled") {
+            tdOps.appendChild(btnDep);
+            tdOps.appendChild(btnAlert);
+          } else if (sectionType === "inflight") {
+            tdOps.appendChild(btnArr);
+            tdOps.appendChild(btnAlert);
+          } else if (sectionType === "grounded") {
+            tdOps.appendChild(btnAlert);
+          } else {
+            // Fallback: show all if unknown section
+            tdOps.appendChild(btnDep);
+            tdOps.appendChild(btnArr);
+            tdOps.appendChild(btnAlert);
+          }
+        }
         tr.appendChild(tdOps);
 
         tr.addEventListener("click", () => {
@@ -3399,6 +3334,7 @@
         roleName: "–",
         dep: "–",
         arr: "–",
+        // completed fields removed
         remarks: "–"
       };
       const f = flight || defaults;
@@ -3452,7 +3388,9 @@
       setTextSafe("acPIC", f.pic || defaults.pic);
       setTextSafe("acRoleName", f.roleName || defaults.roleName);
       setTextSafe("acDep", f.dep || defaults.dep);
-      setTextSafe("acArr", f.arr || defaults.arr);
+      const arrDisplay = (f.landed && f.arr) ? f.arr : "–";
+      setTextSafe("acArr", arrDisplay);
+      // Completed display removed
 
       const depIcaoEl = document.getElementById("acDepIcao");
       if (depIcaoEl) depIcaoEl.textContent = (flight && flight.depAirport) ? flight.depAirport.toUpperCase() : "–";
@@ -3474,82 +3412,36 @@
     }
 
     function openFlightModal(mode, index = null) {
-      closeAllModals(); // Chiudi tutti i modal prima di aprire flight modal
+      closeAllModals();
       editingFlightIndex = (mode === "edit" ? index : null);
       document.getElementById("flightModalTitle").textContent =
         mode === "edit" ? "Edit flight" : "Add flight";
       
-      // Mostra/nascondi pulsante DELETE
       const deleteBtn = document.getElementById("deleteFlightBtn");
       deleteBtn.style.display = (mode === "edit") ? "inline-block" : "none";
+      
+      const regInput = document.getElementById("flightRegInput");
+      const depInput = document.getElementById("flightDepAirportInput");
+      const arrInput = document.getElementById("flightArrAirportInput");
 
-      // Popola fleet select
-      const sel = document.getElementById("flightRegSelect");
-      sel.innerHTML = "";
-      state.fleet.forEach(item => {
-        const opt = document.createElement("option");
-        opt.value = item.reg;
-        opt.textContent = `${item.reg} · ${item.type}`;
-        sel.appendChild(opt);
-      });
-
-      // Popola airport selects (stile come fleet)
-      const depSel = document.getElementById("flightDepAirportInput");
-      const arrSel = document.getElementById("flightArrAirportInput");
-      const depTxt = document.getElementById("flightDepAirportCustomInput");
-      const arrTxt = document.getElementById("flightArrAirportCustomInput");
-      depSel.innerHTML = "";
-      arrSel.innerHTML = "";
-
-      state.airportDatabase.forEach(apt => {
-        const optDep = document.createElement("option");
-        optDep.value = apt.icao;
-        optDep.textContent = `${apt.icao} · ${formatAirportName(apt.name)}`;
-        depSel.appendChild(optDep);
-
-        const optArr = document.createElement("option");
-        optArr.value = apt.icao;
-        optArr.textContent = `${apt.icao} · ${formatAirportName(apt.name)}`;
-        arrSel.appendChild(optArr);
-      });
-
-      // In add mode, prefer GCLB if esiste, altrimenti prima voce
-      if (mode !== "edit") {
-        const ensureHas = (sel, val) => {
-          const found = Array.from(sel.options).some(o => o.value === val);
-          if (found) sel.value = val; else if (sel.options.length) sel.value = sel.options[0].value;
-        };
-        ensureHas(depSel, "GCLB");
-        ensureHas(arrSel, "GCLB");
-        if (depTxt) depTxt.value = depSel.value || "";
-        if (arrTxt) arrTxt.value = arrSel.value || "";
-      }
-
-      const setVal = (id, val) => { document.getElementById(id).value = val || ""; };
-      const setChk = (id, val) => { document.getElementById(id).checked = !!val; };
+      const setVal = (id, val) => { 
+        const el = document.getElementById(id);
+        if (el) el.value = val || "";
+      };
+      const setChk = (id, val) => { 
+        const el = document.getElementById(id);
+        if (el) el.checked = !!val;
+      };
 
       if (mode === "edit" && index !== null) {
         const flights = state.airports[state.currentAirport] || [];
         const f = flights[index];
         if (!f) return;
-
-        sel.value = f.reg;
+        
+        regInput.value = f.reg || "";
         setVal("flightCallsignInput", f.callsign);
-        // Assicura che gli aeroporti correnti compaiano anche se non nel DB
-        if (f.depAirport && !Array.from(depSel.options).some(o => o.value === f.depAirport)) {
-          const o = document.createElement("option"); o.value = f.depAirport; o.textContent = `${f.depAirport} · (custom)`; depSel.appendChild(o);
-          // tenta di risolvere il nome automaticamente
-          ensureAirportNameFor(f.depAirport);
-        }
-        if (f.arrAirport && !Array.from(arrSel.options).some(o => o.value === f.arrAirport)) {
-          const o = document.createElement("option"); o.value = f.arrAirport; o.textContent = `${f.arrAirport} · (custom)`; arrSel.appendChild(o);
-          // tenta di risolvere il nome automaticamente
-          ensureAirportNameFor(f.arrAirport);
-        }
         setVal("flightDepAirportInput", f.depAirport);
         setVal("flightArrAirportInput", f.arrAirport);
-        if (depTxt) depTxt.value = f.depAirport || "";
-        if (arrTxt) arrTxt.value = f.arrAirport || "";
         setVal("flightPicInput", f.pic);
         setVal("flightRoleNameInput", f.roleName);
         setVal("flightSquawkInput", f.squawk);
@@ -3560,14 +3452,10 @@
         document.getElementById("remarksCounter").textContent =
           `${(f.remarks || "").length} / 100`;
       } else {
+        regInput.value = "";
         setVal("flightCallsignInput", "");
-        setVal("flightDepAirportInput", "GCLB");
-        setVal("flightArrAirportInput", "GCLB");
-        if (depTxt) depTxt.value = "GCLB";
-        if (arrTxt) arrTxt.value = "GCLB";
-        // assicura che i nomi siano presenti/aggiornati
-        ensureAirportNameFor(depSel.value);
-        ensureAirportNameFor(arrSel.value);
+        setVal("flightDepAirportInput", "");
+        setVal("flightArrAirportInput", "");
         setVal("flightPicInput", "");
         setVal("flightRoleNameInput", "");
         setVal("flightSquawkInput", "");
@@ -3581,59 +3469,17 @@
       document.getElementById("modalError").style.display = "none";
       document.getElementById("flightModalBackdrop").classList.add("active");
       document.getElementById("flightCallsignInput").focus();
-
-      // Sync tra select e input testo (uppercase, 4 lettere)
-      const toUpperICAO = (v) => (v || "").replace(/[^a-z0-9]/gi, '').toUpperCase().slice(0,4);
-      if (depTxt && depSel) {
-        depTxt.addEventListener('input', () => {
-          depTxt.value = toUpperICAO(depTxt.value);
-          const match = Array.from(depSel.options).find(o => o.value === depTxt.value);
-          if (match) depSel.value = match.value;
-        });
-        // quando l'utente termina di scrivere un ICAO non presente, aggiungi (custom) e cerca il nome
-        depTxt.addEventListener('blur', async () => {
-          const code = toUpperICAO(depTxt.value);
-          if (code.length !== 4) return;
-          const existingOpt = Array.from(depSel.options).find(o => o.value === code);
-          if (!existingOpt) {
-            const o = document.createElement('option');
-            o.value = code; o.textContent = `${code} · (custom)`; depSel.appendChild(o);
-            depSel.value = code;
-            await ensureAirportNameFor(code);
-            depTxt.value = code;
-          } else if (existingOpt.textContent.includes('(custom)')) {
-            await ensureAirportNameFor(code);
-          }
-        });
-        depSel.addEventListener('change', () => {
-          depTxt.value = depSel.value || '';
-        });
-      }
-      if (arrTxt && arrSel) {
-        arrTxt.addEventListener('input', () => {
-          arrTxt.value = toUpperICAO(arrTxt.value);
-          const match = Array.from(arrSel.options).find(o => o.value === arrTxt.value);
-          if (match) arrSel.value = match.value;
-        });
-        // come sopra per ARR
-        arrTxt.addEventListener('blur', async () => {
-          const code = toUpperICAO(arrTxt.value);
-          if (code.length !== 4) return;
-          const existingOpt = Array.from(arrSel.options).find(o => o.value === code);
-          if (!existingOpt) {
-            const o = document.createElement('option');
-            o.value = code; o.textContent = `${code} · (custom)`; arrSel.appendChild(o);
-            arrSel.value = code;
-            await ensureAirportNameFor(code);
-            arrTxt.value = code;
-          } else if (existingOpt.textContent.includes('(custom)')) {
-            await ensureAirportNameFor(code);
-          }
-        });
-        arrSel.addEventListener('change', () => {
-          arrTxt.value = arrSel.value || '';
-        });
-      }
+      
+      // Auto-uppercase inputs
+      regInput.addEventListener('input', () => {
+        regInput.value = regInput.value.toUpperCase();
+      });
+      depInput.addEventListener('input', () => {
+        depInput.value = depInput.value.toUpperCase();
+      });
+      arrInput.addEventListener('input', () => {
+        arrInput.value = arrInput.value.toUpperCase();
+      });
     }
 
     function closeFlightModal() {
@@ -3642,10 +3488,10 @@
     }
 
     function handleSaveFlight() {
-      const reg = document.getElementById("flightRegSelect").value.trim();
+      const reg = document.getElementById("flightRegInput").value.trim().toUpperCase();
       const callsign = document.getElementById("flightCallsignInput").value.trim().toUpperCase();
-      const depAirport = (document.getElementById("flightDepAirportCustomInput").value || document.getElementById("flightDepAirportInput").value || "").trim().toUpperCase();
-      const arrAirport = (document.getElementById("flightArrAirportCustomInput").value || document.getElementById("flightArrAirportInput").value || "").trim().toUpperCase();
+      const depAirport = document.getElementById("flightDepAirportInput").value.trim().toUpperCase();
+      const arrAirport = document.getElementById("flightArrAirportInput").value.trim().toUpperCase();
       const pic = document.getElementById("flightPicInput").value.trim();
       const roleName = document.getElementById("flightRoleNameInput").value.trim();
       const squawk = document.getElementById("flightSquawkInput").value.trim();
@@ -4086,8 +3932,6 @@
       document.getElementById("settingsRadarSourceSelect").value =
         state.settings.radarSource || "adsbexchange";
 
-      renderAirportList();
-      renderFleetList();
       document.getElementById("settingsModalBackdrop").classList.add("active");
     }
 
@@ -4095,308 +3939,379 @@
       document.getElementById("settingsModalBackdrop").classList.remove("active");
     }
 
-    function renderAirportList() {
-      const list = document.getElementById("airportList");
-      list.innerHTML = "";
+    // Airport database functions removed - no longer needed
 
-      if (state.airportDatabase.length === 0) {
-        list.innerHTML = "<div style='font-size:0.78rem;color:#9ca3af;'>Nessun aeroporto nel database.</div>";
-        return;
-      }
+    // Fleet editor removed - legacy stub eliminated to fix syntax error.
 
-      state.airportDatabase.forEach((a, idx) => {
-        const row = document.createElement("div");
-        row.className = "fleet-row";
-
-        const info = document.createElement("div");
-        info.className = "fleet-info";
-        info.innerHTML = `<span class="fleet-reg">${a.icao}</span> · <span class="fleet-type">${formatAirportName(a.name)}</span>`;
-
-        const btn = document.createElement("button");
-        btn.className = "fleet-remove-btn";
-        btn.textContent = "🗑️";
-        btn.addEventListener("click", () => {
-          state.airportDatabase.splice(idx, 1);
-          saveState();
-          renderAirportList();
-        });
-
-        row.appendChild(info);
-        row.appendChild(btn);
-        list.appendChild(row);
-      });
-    }
-
-    function addAirportToDatabase() {
-      const icaoInput = document.getElementById("airportNewIcaoInput");
-      const nameInput = document.getElementById("airportNewNameInput");
-      const icao = icaoInput.value.trim().toUpperCase();
-      const name = formatAirportName(nameInput.value.trim());
-      if (!icao || !name || icao.length !== 4) return;
-
-      // Controlla se l'ICAO esiste già
-      const exists = state.airportDatabase.some(a => a.icao === icao);
-      if (exists) {
-        showErrorPopup("THIS AIRPORT ALREADY EXISTS");
-        return;
-      }
-
-      state.airportDatabase.push({ icao, name });
-      saveState();
-      icaoInput.value = "";
-      nameInput.value = "";
-      renderAirportList();
-      showSuccessPopup("THIS AIRPORT HAS BEEN ADDED");
-    }
-
-    // ---- Lookup nome aeroporto da ICAO (Wikidata / Wikipedia) ----
-    function findAirportInDB(icao) {
-      icao = (icao || "").toUpperCase();
-      return state.airportDatabase.find(a => a.icao === icao) || null;
-    }
-
-    async function fetchAirportNameByWikidata(icao) {
-      try {
-        const query = `SELECT ?item ?itemLabel WHERE { ?item wdt:P239 "${icao}". SERVICE wikibase:label { bd:serviceParam wikibase:language "it,en". } } LIMIT 1`;
-        const url = `https://query.wikidata.org/sparql?format=json&query=${encodeURIComponent(query)}`;
-        const resp = await fetch(url, { headers: { 'Accept': 'application/sparql-results+json' } });
-        if (!resp.ok) return null;
-        const data = await resp.json();
-        const b = data && data.results && data.results.bindings && data.results.bindings[0];
-        if (b && b.itemLabel && b.itemLabel.value) return b.itemLabel.value;
-      } catch (e) { /* Wikidata fetch error */ }
-      return null;
-    }
-
-    async function fetchAirportNameByWikipedia(icao) {
-      const tryLang = async (lang) => {
-        try {
-          const url = `https://${lang}.wikipedia.org/w/api.php?action=opensearch&search=${encodeURIComponent(icao + ' airport')}&limit=1&format=json&origin=*`;
-          const resp = await fetch(url);
-          if (!resp.ok) return null;
-          const arr = await resp.json();
-          const title = (arr && arr[1] && arr[1][0]) ? arr[1][0] : null;
-          return title;
-        } catch (e) { return null; }
-      };
-      return (await tryLang('it')) || (await tryLang('en'));
+    function formatAirportName(name) {
+      if (!name) return "";
+      // Capitalize first letter of each word
+      return name.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
     }
 
     async function fetchAirportNameGuess(icao) {
-      if (!/^([A-Z]{4})$/.test((icao || '').toUpperCase())) return null;
-      const fromWD = await fetchAirportNameByWikidata(icao.toUpperCase());
-      if (fromWD) return fromWD;
-      return await fetchAirportNameByWikipedia(icao.toUpperCase());
-    }
-
-    // Normalizza la capitalizzazione del nome dell'aeroporto (Title Case smart)
-    function formatAirportName(name) {
-      if (!name) return "";
-      let s = name.trim().replace(/\s+/g, ' ');
-      const SMALL = new Set([
-        'di','de','del','della','delle','dei','degli','da','dal','dallo','dalla','dalle','dai',
-        'do','dos','das','du','des','la','le','lo','il','i','l\'','e','ed','y','en',
-        'of','the','and','a','an','to','von','van'
-      ]);
-      const capSegment = (seg) => {
-        const lower = seg.toLowerCase();
-        if (lower.length === 0) return seg;
-        return lower[0].toUpperCase() + lower.slice(1);
-      };
-      const capWord = (w, isFirst) => {
-        if (!w) return w;
-        if (/^[A-Z]{2,}$/.test(w)) return w; // mantieni acronimi (es. USA)
-        // apostrofi: l'aquila -> L'Aquila, d'oro -> d'Oro
-        if (w.includes("'")) {
-          const parts = w.split("'");
-          const first = parts[0].toLowerCase();
-          const rest = parts.slice(1).map(p => capSegment(p)).join("'");
-          const firstOut = (!isFirst && SMALL.has(first)) ? first : capSegment(first);
-          return `${firstOut}'${rest}`;
+      try {
+        const url = `https://api.allorigins.win/raw?url=${encodeURIComponent(`https://aviationweather.gov/api/data/airport?ids=${icao}&format=json`)}`;
+        const resp = await fetch(url);
+        if (resp.ok) {
+          const data = await resp.json();
+          if (data && data.length > 0 && data[0].name) {
+            return data[0].name;
+          }
         }
-        // trattini: Genova-Sestri
-        const hy = w.split('-');
-        const cooked = hy.map((p) => capSegment(p)).join('-');
-        const lowerCooked = cooked.toLowerCase();
-        if (!isFirst && SMALL.has(lowerCooked)) return lowerCooked;
-        return cooked;
-      };
-      const words = s.split(' ');
-      const out = words.map((w, i) => capWord(w, i === 0));
-      return out.join(' ');
-    }
-
-    function updateAirportOptionsLabels(icao, name) {
-      const label = `${icao} · ${formatAirportName(name)}`;
-      const depSel = document.getElementById('flightDepAirportInput');
-      const arrSel = document.getElementById('flightArrAirportInput');
-      [depSel, arrSel].forEach(sel => {
-        if (!sel) return;
-        Array.from(sel.options).forEach(o => { if (o.value === icao) o.textContent = label; });
-      });
-    }
-
-    async function ensureAirportNameFor(icao) {
-      if (!icao) return;
-      icao = icao.toUpperCase();
-      const existing = findAirportInDB(icao);
-      if (existing && existing.name) {
-        const formatted = formatAirportName(existing.name);
-        updateAirportOptionsLabels(icao, formatted);
-        return formatted;
-      }
-      const name = await fetchAirportNameGuess(icao);
-      if (name) {
-        const formatted = formatAirportName(name);
-        if (!existing) state.airportDatabase.push({ icao, name: formatted });
-        else existing.name = formatted;
-        saveState();
-        updateAirportOptionsLabels(icao, formatted);
-        return formatted;
-      }
+      } catch (e) { /* ignore */ }
       return null;
     }
 
-    function renderFleetList() {
-      const list = document.getElementById("fleetList");
-      list.innerHTML = "";
+    // ----- PERIODIC FLIGHTLOGGER SYNC (manual import removed) -----
+    const hiddenAircrafts = [
+      "EC-LLT", "EC-LHK", "N3909L", "EC-LNS", "EC-MAV", "EC-IKG", "EC-IUE",
+      "EC-LFK", "EC-MZP", "EC-KXF", "EC-LIB", "EC-LDC", "EC-LKG", "EC-LJN",
+      "EC-LRL", "EC-LRN", "EC-LVL", "EC-LXE", "EC-MGC", "EC-MGL",
+      "EC-MOR", "EC-MPV", "EC-NIH", "EC-NJQ", "EC-NKC"
+    ];
+    const flightSyncConfig = {
+      enabled: true,          // permette disattivare facilmente
+      intervalMs: 60000,      // ogni minuto
+      fullHourReload: true    // forza sync al minuto 0 di ogni ora (oltre al normale intervallo)
+    };
+    let lastFlightSync = null;
+    let isFlightSyncRunning = false;
 
-      if (state.fleet.length === 0) {
-        list.innerHTML = "<div style='font-size:0.78rem;color:#9ca3af;'>Nessun aereo in flotta.</div>";
-        return;
+    function updateFlightSyncStatus(label) {
+      const el = document.getElementById('flightSyncStatus');
+      if (!el) return;
+      if (!label) { el.style.display = 'none'; return; }
+      el.textContent = label;
+      el.style.display = 'inline-block';
+    }
+
+    function mapFlightLoggerBooking(flight) {
+      const reg = extractRegistration(flight.aircraft?.callSign);
+      if (!reg) return null;
+      if (hiddenAircrafts.includes(reg)) return null;
+      const callsign = extractOperativeCallsign(flight.comment, reg);
+      // PIC / roleName logic riuso da import
+      let pic = "";
+      if (flight.instructor) {
+        if (flight.student) {
+          pic = (flight.student.callSign || "").substring(0,5).toUpperCase();
+        } else if (flight.students && flight.students.length > 0) {
+          pic = flight.students.map(s => (s.callSign || "").substring(0,5).toUpperCase()).join(',');
+        }
+      } else if (flight.student) {
+        pic = (flight.student.callSign || "").substring(0,5).toUpperCase();
+      } else if (flight.students && flight.students.length > 0) {
+        pic = flight.students.map(s => (s.callSign || "").substring(0,5).toUpperCase()).join(',');
+      } else if (flight.pic) {
+        pic = (flight.pic.callSign || "").substring(0,5).toUpperCase();
       }
+      const depAirport = (flight.departureAirport?.name || "").substring(0,4).toUpperCase();
+      const arrAirport = (flight.arrivalAirport?.name || "").substring(0,4).toUpperCase();
+      let roleName = "";
+      if (flight.instructor) {
+        const fiName = extractFullName(flight.instructor.callSign);
+        roleName = fiName ? fiName : (flight.instructor.callSign || "").substring(0,5).toUpperCase();
+      }
+      const statusRaw = (flight.status || flight.state || "").toUpperCase();
+      return {
+        flightLoggerId: flight.id,
+        reg,
+        callsign,
+        eobt: formatFlightTime(flight.flightStartsAt),
+        remoteEndTime: formatFlightTime(flight.flightEndsAt),
+        depAirport,
+        arrAirport,
+        pic,
+        roleName,
+        sourceStatus: statusRaw || null,
+        cancelled: detectCancelled(flight)
+      };
+    }
 
-      state.fleet.forEach((a, idx) => {
-        const row = document.createElement("div");
-        row.className = "fleet-row";
-
-        const info = document.createElement("div");
-        info.className = "fleet-info";
-        info.innerHTML = `<span class="fleet-reg">${a.reg}</span> · <span class="fleet-type">${a.type}</span>`;
-
-        const btnContainer = document.createElement("div");
-        btnContainer.style.display = "flex";
-        btnContainer.style.gap = "4px";
-
-        const editBtn = document.createElement("button");
-        editBtn.className = "fleet-edit-btn";
-        editBtn.textContent = "✏️";
-        editBtn.addEventListener("click", () => {
-          openEditFleetModal(idx);
+    async function fetchFlightLoggerBookingsRaw() {
+      const today = new Date();
+      const year = today.getFullYear();
+      const month = String(today.getMonth() + 1).padStart(2, '0');
+      const day = String(today.getDate()).padStart(2, '0');
+      const startDate = `${year}-${month}-${day}T00:00:00`;
+      const endDate = `${year}-${month}-${day}T23:59:59`;
+      // Primo tentativo: solo 'status' (più probabile esista)
+      const statusOnlyQuery = {
+        query: `query {\n          bookings(from: "${startDate}", to: "${endDate}", all: true) {\n            nodes {\n              ... on SingleStudentBooking { id flightStartsAt flightEndsAt comment status aircraft { callSign } instructor { callSign } student { callSign } departureAirport { name } arrivalAirport { name } }\n              ... on MultiStudentBooking { id flightStartsAt flightEndsAt comment status aircraft { callSign } instructor { callSign } students { callSign } departureAirport { name } arrivalAirport { name } }\n              ... on OperationBooking { id flightStartsAt flightEndsAt comment status aircraft { callSign } pic { callSign } crew { callSign } departureAirport { name } arrivalAirport { name } }\n            }\n          }\n        }`
+      };
+      // Secondo tentativo: status + state
+      const extendedQuery = {
+        query: `query {\n          bookings(from: "${startDate}", to: "${endDate}", all: true) {\n            nodes {\n              ... on SingleStudentBooking { id flightStartsAt flightEndsAt comment status state aircraft { callSign } instructor { callSign } student { callSign } departureAirport { name } arrivalAirport { name } }\n              ... on MultiStudentBooking { id flightStartsAt flightEndsAt comment status state aircraft { callSign } instructor { callSign } students { callSign } departureAirport { name } arrivalAirport { name } }\n              ... on OperationBooking { id flightStartsAt flightEndsAt comment status state aircraft { callSign } pic { callSign } crew { callSign } departureAirport { name } arrivalAirport { name } }\n            }\n          }\n        }`
+      };
+      const basicQuery = {
+        query: `query {\n          bookings(from: "${startDate}", to: "${endDate}", all: true) {\n            nodes {\n              ... on SingleStudentBooking { id flightStartsAt flightEndsAt comment aircraft { callSign } instructor { callSign } student { callSign } departureAirport { name } arrivalAirport { name } }\n              ... on MultiStudentBooking { id flightStartsAt flightEndsAt comment aircraft { callSign } instructor { callSign } students { callSign } departureAirport { name } arrivalAirport { name } }\n              ... on OperationBooking { id flightStartsAt flightEndsAt comment aircraft { callSign } pic { callSign } crew { callSign } departureAirport { name } arrivalAirport { name } }\n            }\n          }\n        }`
+      };
+      async function doFetch(q) {
+        const response = await fetch("https://api.flightlogger.net/graphql", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer b02f466a1ed25106cac8fc2cf9f814a7"
+          },
+          body: JSON.stringify(q)
         });
+        if (!response.ok) throw new Error(`FL API ${response.status}`);
+        const data = await response.json();
+        if (data.errors) throw new Error(data.errors[0].message);
+        return data?.data?.bookings?.nodes || [];
+      }
+      try {
+        // Prova status+state
+        return await doFetch(extendedQuery);
+      } catch (e) {
+        try {
+          // Prova solo status
+          return await doFetch(statusOnlyQuery);
+        } catch (e2) {
+          // fallback finale senza status
+          try { return await doFetch(basicQuery); } catch (e3) { throw e3; }
+        }
+      }
+    }
 
-        const removeBtn = document.createElement("button");
-        removeBtn.className = "fleet-remove-btn";
-        removeBtn.textContent = "🗑️";
-        removeBtn.addEventListener("click", () => {
-          state.fleet.splice(idx, 1);
+    async function runFlightLoggerSync() {
+      if (!flightSyncConfig.enabled) return;
+      if (isFlightSyncRunning) return; // evita overlap
+      isFlightSyncRunning = true;
+      try {
+        updateFlightSyncStatus('Sync…');
+        const raw = await fetchFlightLoggerBookingsRaw();
+        const mapped = raw.map(mapFlightLoggerBooking).filter(x => !!x);
+        const flightsLocal = state.airports[state.currentAirport] || [];
+        let changes = 0;
+        // Set attuale degli ID disponibili da FlightLogger
+        const currentIds = new Set(mapped.map(m => m.flightLoggerId));
+
+        // Migrazione: assegna flightLoggerId ai vecchi voli importati prima della patch (senza ID)
+        flightsLocal.forEach(f => {
+          if (!f.flightLoggerId) {
+            // match per REG + EOBT (stessa ora schedulata) + stesso dep/arr se presenti
+            const match = mapped.find(m => m.reg === f.reg && m.eobt === f.eobt && (!f.depAirport || m.depAirport === f.depAirport));
+            if (match) {
+              f.flightLoggerId = match.flightLoggerId;
+              f._justUpdated = Date.now();
+              changes++;
+            }
+          }
+        });
+        mapped.forEach(mf => {
+          // cerca match per id
+          let existing = flightsLocal.find(f => f.flightLoggerId === mf.flightLoggerId);
+          if (!existing) {
+            // crea nuovo volo solo se non presente: stato iniziale
+            flightsLocal.push({
+              flightLoggerId: mf.flightLoggerId,
+              callsign: mf.callsign,
+              reg: mf.reg,
+              depAirport: mf.depAirport,
+              arrAirport: mf.arrAirport,
+              pic: mf.pic,
+              roleName: mf.roleName,
+              squawk: null,
+              eobt: mf.eobt,
+              delayEobt: null,
+              dep: null,
+              arr: null,
+              cancelled: mf.cancelled,
+              departed: false,
+              landed: false,
+              sourceStatus: mf.sourceStatus || null,
+              remarks: '',
+              squawkDelivered: false,
+              highlighted: false,
+              _justUpdated: Date.now()
+            });
+            changes++;
+            return;
+          }
+          // aggiorna campi se cambiati (solo se non partito/atterrato dove rilevante)
+          const original = { ...existing }; // copia per confronto
+          let updated = false;
+          if (existing.cancelled !== mf.cancelled) { existing.cancelled = mf.cancelled; updated = true; }
+          if (!existing.departed && existing.eobt !== mf.eobt) { existing.eobt = mf.eobt; updated = true; }
+          if (existing.depAirport !== mf.depAirport) { existing.depAirport = mf.depAirport; updated = true; }
+            if (existing.arrAirport !== mf.arrAirport) { existing.arrAirport = mf.arrAirport; updated = true; }
+          if (existing.callsign !== mf.callsign && mf.callsign) { existing.callsign = mf.callsign; updated = true; }
+          if (existing.pic !== mf.pic) { existing.pic = mf.pic; updated = true; }
+          if (existing.roleName !== mf.roleName) { existing.roleName = mf.roleName; updated = true; }
+          if (existing.sourceStatus !== mf.sourceStatus) { existing.sourceStatus = mf.sourceStatus; updated = true; }
+          // stato remoto CANCELLED → forza cancellato se non già partito/atterrato
+          if (!existing.departed && !existing.landed && mf.sourceStatus === 'CANCELLED' && !existing.cancelled) {
+            existing.cancelled = true; updated = true;
+          }
+          // Se booking ora è cancellato ma volo partito/atterrato lo ignoriamo per non sovrascrivere lo storico
+          if (updated) { existing._justUpdated = Date.now(); changes++; }
+        });
+        // Marca come CANCEL i voli che avevano un flightLoggerId ma non sono più presenti nei bookings odierni
+        flightsLocal.forEach(f => {
+          if (f.flightLoggerId && !currentIds.has(f.flightLoggerId)) {
+            // Se non è già partito o atterrato e non già cancellato, lo segniamo CANCEL
+            if (!f.departed && !f.landed && !f.cancelled) {
+              f.cancelled = true;
+              f._justUpdated = Date.now();
+              changes++;
+            }
+          }
+        });
+        // opzionale: rimuovere voli non più presenti? (non richiesto) → ignorato
+        if (changes > 0) {
+          state.airports[state.currentAirport] = flightsLocal;
           saveState();
-          renderFleetList();
-        });
-
-        btnContainer.appendChild(editBtn);
-        btnContainer.appendChild(removeBtn);
-        row.appendChild(info);
-        row.appendChild(btnContainer);
-        list.appendChild(row);
-      });
-    }
-
-    function addFleetAircraft() {
-      const regInput = document.getElementById("fleetNewRegInput");
-      const typeInput = document.getElementById("fleetNewTypeInput");
-      const reg = regInput.value.trim().toUpperCase();
-      const type = typeInput.value.trim();
-      if (!reg || !type) return;
-
-      // Controlla se la registrazione esiste già
-      const exists = state.fleet.some(a => a.reg === reg);
-      if (exists) {
-        showErrorPopup("THIS AIRCRAFT ALREADY EXISTS");
-        return;
+          renderBoard();
+        }
+        lastFlightSync = new Date();
+        const hh = lastFlightSync.getUTCHours().toString().padStart(2,'0');
+        const mm = lastFlightSync.getUTCMinutes().toString().padStart(2,'0');
+        updateFlightSyncStatus(`Synced ${hh}:${mm}Z (${changes})`);
+        // nasconde status dopo qualche secondo
+        setTimeout(() => updateFlightSyncStatus(null), 8000);
+      } catch (e) {
+        updateFlightSyncStatus('Sync error');
+        setTimeout(() => updateFlightSyncStatus(null), 8000);
+      } finally {
+        isFlightSyncRunning = false;
       }
-
-      state.fleet.push({ reg, type });
-      saveState();
-      regInput.value = "";
-      typeInput.value = "";
-      renderFleetList();
-      showSuccessPopup("THIS AIRCRAFT HAS BEEN ADDED");
     }
 
-    let editingFleetIndex = null;
-
-    function openEditFleetModal(index) {
-      editingFleetIndex = index;
-      const aircraft = state.fleet[index];
-      if (!aircraft) return;
+    function scheduleFlightLoggerSync() {
+      // prima esecuzione immediata all'avvio
+      runFlightLoggerSync();
       
-      document.getElementById("editFleetRegInput").value = aircraft.reg;
-      document.getElementById("editFleetTypeInput").value = aircraft.type;
-      document.getElementById("editFleetError").style.display = "none";
-      document.getElementById("editFleetModalBackdrop").classList.add("active");
-      document.getElementById("editFleetRegInput").focus();
+      let lastCheckDate = new Date().toISOString().split('T')[0]; // formato YYYY-MM-DD
+      
+      setInterval(() => {
+        const now = new Date();
+        const currentDate = now.toISOString().split('T')[0];
+        
+        // Controlla se è mezzanotte (00:00) e se è cambiato il giorno
+        if (now.getUTCHours() === 0 && now.getUTCMinutes() === 0 && currentDate !== lastCheckDate) {
+          // MEZZANOTTE: cancella tutti i voli prima di importare i nuovi
+          console.log('🌙 Midnight detected - clearing all flights before sync');
+          state.airports[state.currentAirport] = [];
+          saveState();
+          renderBoard();
+          lastCheckDate = currentDate;
+          // Attendi un secondo prima di fare il sync per assicurare che i voli siano stati cancellati
+          setTimeout(() => {
+            runFlightLoggerSync();
+          }, 1000);
+          return;
+        }
+        
+        if (flightSyncConfig.fullHourReload && now.getUTCMinutes() === 0) {
+          runFlightLoggerSync();
+          return;
+        }
+        runFlightLoggerSync();
+      }, flightSyncConfig.intervalMs);
     }
 
-    function closeEditFleetModal() {
-      editingFleetIndex = null;
-      document.getElementById("editFleetModalBackdrop").classList.remove("active");
+    function extractRegistration(callSign) {
+      if (!callSign) return null;
+      const upper = callSign.toUpperCase();
+      // Cerca un segmento valido dentro la stringa, perché FlightLogger
+      // spesso aggiunge tipo velivolo o parentesi (es: "EC-NUV (P208)" ).
+      // Formati consentiti:
+      //  - X-XXXX  (una lettera + '-' + 4 lettere) es: F-HATI, D-EVWW
+      //  - XX-XXX  (due lettere + '-' + 3 lettere) es: EC-NUV, EC-OAD
+      // Escludiamo registrazioni con cifre o prefissi simulatore.
+      const match = upper.match(/([A-Z]-[A-Z]{4}|[A-Z]{2}-[A-Z]{3})(?![A-Z0-9])/);
+      return match ? match[1] : null;
     }
 
-    function saveEditFleet() {
-      if (editingFleetIndex === null) return;
-      
-      const reg = document.getElementById("editFleetRegInput").value.trim().toUpperCase();
-      const type = document.getElementById("editFleetTypeInput").value.trim();
-      const errorEl = document.getElementById("editFleetError");
-      
-      errorEl.style.display = "none";
-      
-      if (!reg || !type) {
-        errorEl.textContent = "Registration and Type are required.";
-        errorEl.style.display = "block";
-        return;
+    function extractOperativeCallsign(comment, reg) {
+      if (!comment) comment = "";
+      const upper = comment.toUpperCase();
+
+      // 1. Priorità assoluta: token CNA...
+      const idx = upper.indexOf("CNA");
+      if (idx >= 0) {
+        let segment = upper.slice(idx).split(/\s/)[0];
+        segment = segment.replace(/[^A-Z0-9]/g, "");
+        if (segment.length > 3) return segment; // almeno CNA + 1 char
       }
-      
-      // Check if reg already exists (excluding current aircraft)
-      const exists = state.fleet.some((a, idx) => a.reg === reg && idx !== editingFleetIndex);
-      if (exists) {
-        errorEl.textContent = "THIS AIRCRAFT ALREADY EXISTS";
-        errorEl.style.display = "block";
-        return;
+      const cnaSimple = upper.match(/CNA[0-9A-Z]+/);
+      if (cnaSimple) return cnaSimple[0].toUpperCase();
+
+      // 2. Fallback: derive base registration (EC-NUV -> ECNUV) and look for ECNUV, ECNUV2, ECNUV3...
+      if (reg) {
+        const base = reg.replace(/-/g, '').toUpperCase();
+        // Tokenizzazione per evitare match parziali dentro altre parole
+        const tokens = upper.split(/\s+/).map(t => t.replace(/[^A-Z0-9]/g, ''));
+        for (const tk of tokens) {
+          if (tk.startsWith(base)) {
+            // accetta base + suffisso alfanumerico (numeri o lettere)
+            return tk;
+          }
+        }
+        // fallback regex se tokenizzazione non ha trovato nulla (gestisce caso senza spazi)
+        const regMatch = upper.match(new RegExp(base + '[0-9A-Z]*'));
+        if (regMatch) return regMatch[0].toUpperCase();
       }
-      
-      state.fleet[editingFleetIndex] = { reg, type };
-      saveState();
-      closeEditFleetModal();
-      renderFleetList();
-      showSuccessPopup("AIRCRAFT UPDATED");
+      return "";
     }
+    function extractCode(callSign) {
+      if (!callSign) return "";
+      return (callSign.substring(0,5) || "").toUpperCase();
+    }
+
+    function extractFullName(callSign) {
+      if (!callSign) return "";
+      const parts = callSign.split(" - ");
+      if (parts.length > 1) return parts.slice(1).join(" - ").trim();
+      return "";
+    }
+
+    // Detect cancelled booking (heuristic: status fields or keywords in comment)
+    function detectCancelled(flight) {
+      if (!flight) return false;
+      if (flight.cancelled === true) return true; // direct flag if provided
+      const status = (flight.status || flight.state || "").toUpperCase();
+      if (status.includes("CANCEL")) return true;
+      const comment = (flight.comment || "").toUpperCase();
+      if (/\b(CANC|CANCEL|CANCELLED|ANNULL|ANULADO|CANCELADO)\b/.test(comment)) return true;
+      return false;
+    }
+
+    function formatFlightTime(isoString) {
+      if (!isoString) return "";
+      const date = new Date(isoString);
+      return date.toTimeString().substring(0, 5); // HH:MM
+    }
+
+    // Manual import helpers removed (renderFlightLoggerList, importSelectedFlights, loadFlightLoggerFlights)
 
     function saveSettings() {
-      const icaoRaw = document.getElementById("settingsMetarIcaoInput").value.trim().toUpperCase();
-      const rwHeading = parseInt(document.getElementById("settingsRunwayHeadingInput").value, 10);
+      const metarIcao = document.getElementById("settingsMetarIcaoInput").value.trim().toUpperCase();
+      const runwayHeading = parseInt(document.getElementById("settingsRunwayHeadingInput").value, 10);
       const theme = document.getElementById("settingsThemeSelect").value;
       const radarSource = document.getElementById("settingsRadarSourceSelect").value;
 
-      if (icaoRaw && icaoRaw.length === 4) state.settings.metarIcao = icaoRaw;
-      if (!isNaN(rwHeading) && rwHeading >= 0 && rwHeading <= 359) {
-        state.settings.runwayHeading = rwHeading;
+      if (metarIcao.length !== 4) {
+        alert("ICAO must be 4 characters");
+        return;
       }
-      state.settings.theme = (theme === "light") ? "light" : "dark";
-      state.settings.radarSource = radarSource || "adsbexchange";
+      if (isNaN(runwayHeading) || runwayHeading < 0 || runwayHeading > 359) {
+        alert("Runway heading must be 0-359");
+        return;
+      }
+
+      state.settings.metarIcao = metarIcao;
+      state.settings.runwayHeading = runwayHeading;
+      state.settings.theme = theme;
+      state.settings.radarSource = radarSource;
 
       saveState();
       applyTheme();
-      updateMetarSourceTag();
-      
-      // Forza l'aggiornamento immediato di tutta la visualizzazione
-      updateMetarFromSettings();
-      
-      // Aggiorna anche la visualizzazione della pista con i dati correnti del vento
-      refreshRunwayDisplay();
-      
       closeSettingsModal();
+      updateMetarFromSettings();
+      showSuccessPopup("SETTINGS SAVED");
     }
 
     // ----- METAR & QNH/WIND -----
@@ -4528,7 +4443,6 @@
       const mac = state.settings.ecowittMac || "C4:5B:BE:FA:10:66";
       const apiKey = state.settings.ecowittApiKey || "38b1bbae-c7ca-4e64-817f-9b136e0b4d2f";
       const appKey = state.settings.ecowittAppKey || "EFB59102B7AE48CA18CB8D6D6D061D4B";
-      
       try {
         // URL API Ecowitt - prova senza proxy prima
         const url = `https://api.ecowitt.net/api/v3/device/real_time?application_key=${appKey}&api_key=${apiKey}&mac=${mac}&call_back=all&temp_unitid=1&pressure_unitid=3&wind_speed_unitid=7&rainfall_unitid=12&solar_irradiance_unitid=16`;
@@ -4538,7 +4452,6 @@
         if (!resp.ok) {
           throw new Error(`HTTP ${resp.status}`);
         }
-        
         const data = await resp.json();
         
         if (data && data.code === 0 && data.data) {
@@ -4918,12 +4831,6 @@
     document.getElementById("settingsBtn").addEventListener("click", openSettingsModal);
     document.getElementById("cancelSettingsBtn").addEventListener("click", closeSettingsModal);
     document.getElementById("saveSettingsBtn").addEventListener("click", saveSettings);
-    document.getElementById("airportAddBtn").addEventListener("click", addAirportToDatabase);
-    document.getElementById("fleetAddBtn").addEventListener("click", addFleetAircraft);
-    
-    // Edit fleet modal handlers
-    document.getElementById("cancelEditFleetBtn").addEventListener("click", closeEditFleetModal);
-    document.getElementById("saveEditFleetBtn").addEventListener("click", saveEditFleet);
 
     // DELAY MODAL
     document.getElementById("dismissDelayBtn").addEventListener("click", () => {
@@ -4982,12 +4889,6 @@
         }, 100);
       }
     });
-    document.getElementById("editFleetModalBackdrop").addEventListener("click", e => {
-      if (e.target.id === "editFleetModalBackdrop") closeEditFleetModal();
-    });
-    document.getElementById("editFleetRegInput").addEventListener("input", (e) => {
-      e.target.value = e.target.value.toUpperCase();
-    });
     
     // Radar modal handlers - dynamic source selection
     document.getElementById("radarBtn").addEventListener("click", () => {
@@ -5020,14 +4921,7 @@
       }
     });
     
-    // FlightLogger modal handlers
-    document.getElementById("flightloggerBtn").addEventListener("click", () => {
-      const width = 1300;
-      const height = 700;
-      const left = (screen.width - width) / 2;
-      const top = (screen.height - height) / 2;
-      window.open("https://canavia.flightlogger.net/bookings/overview", "_blank", `width=${width},height=${height},left=${left},top=${top}`);
-    });
+    // FlightLogger manual modal handlers removed
     
     // Simbrief modal handlers
     document.getElementById("simbriefBtn").addEventListener("click", () => {
@@ -5042,7 +4936,6 @@
       document.getElementById("simbriefModalBackdrop").classList.remove("active");
       document.getElementById("simbriefIframe").src = "";
     });
-    
     document.getElementById("simbriefModalBackdrop").addEventListener("click", (e) => {
       if (e.target.id === "simbriefModalBackdrop") {
         document.getElementById("simbriefModalBackdrop").classList.remove("active");
@@ -5054,9 +4947,6 @@
       e.target.value = (e.target.value || "").toUpperCase();
     });
 
-    document.getElementById("settingsModalBackdrop").addEventListener("click", e => {
-      if (e.target.id === "settingsModalBackdrop") closeSettingsModal();
-    });
 
     document.getElementById("timeModalBackdrop").addEventListener("click", e => {
       if (e.target.id === "timeModalBackdrop") closeTimeModal();
@@ -5187,7 +5077,6 @@
     
     updateUtcClock();
     updateSunriseSunset();
-    initLockPassword();
     initDragAndDrop();
 
     // Auto-refresh intelligente: aggiorna dati senza ricaricare la pagina
@@ -5235,6 +5124,9 @@
     setInterval(() => {
       renderBoard();
     }, 10000);
+
+    // Avvia sync periodico FlightLogger (aggiunge nuovi e aggiorna campi modificati)
+    scheduleFlightLoggerSync();
 
     // Funzioni per gestire il modal aircraft info
     function openAircraftInfoModal() {
