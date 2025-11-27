@@ -46,6 +46,8 @@
       background: radial-gradient(circle at top, #0b1220, #020617 60%);
       overflow: hidden;
       transition: background 0.2s ease;
+      display: flex;
+      flex-direction: column;
     }
 
     .right-column::before {
@@ -509,6 +511,45 @@
       align-items: center;
       justify-content: space-between;
       gap: 10px;
+      flex-shrink: 0;
+    }
+
+    .board-content {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding-right: 4px;
+    }
+
+    /* Scrollbar styling per board-content */
+    .board-content::-webkit-scrollbar {
+      width: 10px;
+    }
+
+    .board-content::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.5);
+      border-radius: 10px;
+    }
+
+    .board-content::-webkit-scrollbar-thumb {
+      background: rgba(148, 163, 184, 0.6);
+      border-radius: 10px;
+    }
+
+    .board-content::-webkit-scrollbar-thumb:hover {
+      background: rgba(148, 163, 184, 0.8);
+    }
+
+    body.light-theme .board-content::-webkit-scrollbar-track {
+      background: rgba(229, 231, 235, 0.5);
+    }
+
+    body.light-theme .board-content::-webkit-scrollbar-thumb {
+      background: rgba(107, 114, 128, 0.6);
+    }
+
+    body.light-theme .board-content::-webkit-scrollbar-thumb:hover {
+      background: rgba(107, 114, 128, 0.8);
     }
 
     .refresh-countdown {
@@ -1335,79 +1376,6 @@
       margin-top: 4px;
     }
 
-    body.light-theme {
-      background: #ffffff;
-      color: #111827;
-    }
-
-    body.light-theme .left-column {
-      background: #ffffff;
-      border-right-color: #e5e7eb;
-    }
-
-    body.light-theme .right-column {
-      background: #ffffff;
-    }
-
-    body.light-theme .panel {
-      background: #ffffff;
-      box-shadow:
-        0 8px 16px rgba(17, 24, 39, 0.08),
-        inset 0 0 0 1px #e5e7eb;
-    }
-
-    body.light-theme .board-card {
-      background: #ffffff;
-      box-shadow:
-        0 8px 16px rgba(17, 24, 39, 0.08),
-        inset 0 0 0 1px #e5e7eb;
-    }
-
-    body.light-theme .board-title { color: #1f2937; }
-    body.light-theme .panel-title { color: #374151; }
-    body.light-theme .field-value { color: #111827; }
-    body.light-theme .field-value.muted { color: #374151; }
-
-    /* Light theme borders and table lines lighter and cleaner */
-    body.light-theme .divider {
-      border-top-color: #e5e7eb;
-    }
-    body.light-theme table.board th,
-    body.light-theme table.board td {
-      border-bottom: 1px solid #e5e7eb;
-    }
-    body.light-theme table.board tr:hover {
-      background: rgba(59, 130, 246, 0.12);
-    }
-
-    body.light-theme button.settings-btn {
-      background: #ffffff;
-      color: #111827;
-      border-color: rgba(148, 163, 184, 0.8);
-    }
-
-    body.light-theme .modal {
-      background: #ffffff;
-      color: #111827;
-      box-shadow:
-        0 20px 40px rgba(17, 24, 39, 0.10),
-        inset 0 0 0 1px #e5e7eb;
-    }
-
-    body.light-theme .modal input,
-    body.light-theme .modal select,
-    body.light-theme .modal textarea {
-      background: #ffffff;
-      color: #111827;
-      border-color: #e5e7eb;
-    }
-
-    body.light-theme .panel-tag {
-      background: #eef2ff;
-      color: #1d4ed8;
-      border-color: #bfdbfe;
-    }
-
     /* --- SQUAWK DOT --- */
     .squawk-wrapper {
       display: flex;
@@ -1702,7 +1670,7 @@
       <div class="panel">
         <div class="panel-header">
           <div class="panel-title">QNH &amp; runway wind</div>
-          <div class="panel-tag" id="metarSourceTag">ECOWITT TOWER</div>
+          <div class="panel-tag" id="metarSourceTag">GCLB TOWER</div>
         </div>
 
         <div class="qnh-line">
@@ -1760,7 +1728,7 @@
         </div>
         <div class="metar-raw-box" style="margin-top: 8px;">
           <div class="metar-raw-label">Current TAF</div>
-          <div id="tafRawText">Loading TAF data...</div>
+          <div id="tafRawText">TAF ---- ----Z ///// ///// /////</div>
         </div>
       </div>
 
@@ -1813,12 +1781,13 @@
         </div>
       </div>
 
-      <div class="board-card">
-        <div class="board-section-header">
-          <div class="board-section-title">📅 SCHEDULED</div>
-          <div class="board-section-count" id="scheduledCount">0 flights</div>
-        </div>
-        <table class="board" id="scheduledTable">
+      <div class="board-content">
+        <div class="board-card">
+          <div class="board-section-header">
+            <div class="board-section-title">📅 SCHEDULED</div>
+            <div class="board-section-count" id="scheduledCount">0 flights</div>
+          </div>
+          <table class="board" id="scheduledTable">
           <thead>
             <tr>
               <th>Callsign</th>
@@ -1889,6 +1858,7 @@
         <div class="empty-msg" id="groundedEmptyMsg" style="display:none;">
           No landed flights.
         </div>
+      </div>
       </div>
     </div>
   </div>
@@ -2022,23 +1992,6 @@
           <div>
             <div class="modal-label">ICAO WX STATION</div>
             <input id="settingsMetarIcaoInput" maxlength="4" placeholder="es. GCLP">
-          </div>
-          <div>
-            <div class="modal-label">Runway heading (deg)</div>
-            <input id="settingsRunwayHeadingInput" type="number" min="0" max="359">
-          </div>
-        </div>
-      </div>
-
-      <div class="settings-section">
-        <div class="settings-section-title">Theme</div>
-        <div class="modal-row">
-          <div>
-            <div class="modal-label">Select theme</div>
-            <select id="settingsThemeSelect">
-              <option value="dark">Dark (blue/navy)</option>
-              <option value="light">Light (white)</option>
-            </select>
           </div>
         </div>
       </div>
@@ -2240,14 +2193,6 @@
     </div>
   </div>
 
-  <!-- SUCCESS POPUP -->
-  <div class="modal-backdrop" id="successPopupBackdrop">
-    <div class="modal" style="width:400px;text-align:center;">
-      <div class="modal-title" style="color:#10b981;font-size:2rem;">ADDED</div>
-      <div style="padding:20px;font-size:1.1rem;font-weight:600;" id="successPopupMessage"></div>
-    </div>
-  </div>
-
   <!-- MODAL AIRCRAFT INFO -->
   <div class="modal-backdrop" id="aircraftInfoModalBackdrop">
     <div class="modal" style="width:520px;">
@@ -2397,30 +2342,14 @@
       currentAirport: "",
       settings: {
         metarIcao: "GCLP",
-        runwayHeading: 270,
-        theme: "dark",
+        runwayHeading: 250,
         radarSource: "adsbexchange",
         useEcowitt: true,
         ecowittMac: "C4:5B:BE:FA:10:66",
         ecowittApiKey: "38b1bbae-c7ca-4e64-817f-9b136e0b4d2f",
         ecowittAppKey: "EFB59102B7AE48CA18CB8D6D6D061D4B"
       },
-      fleet: [
-        { reg: "F-HATI", type: "PIVI" },
-        { reg: "EC-OCY", type: "P208" },
-        { reg: "EC-OCZ", type: "P208" },
-        { reg: "EC-NJX", type: "P208" },
-        { reg: "EC-NJF", type: "P208" },
-        { reg: "EC-NQG", type: "P208" },
-        { reg: "EC-NUV", type: "P208" },
-        { reg: "EC-OII", type: "P208" },
-        { reg: "D-EVWW", type: "TWEN" },
-        { reg: "EC-ORF", type: "P06T" },
-        { reg: "EC-OAD", type: "P06T" },
-        { reg: "EC-MZZ", type: "P06T" },
-        { reg: "EC-NRO", type: "C150" },
-        { reg: "EC-CUC", type: "C150" }
-      ],
+      fleet: [],
       airportDatabase: [],
       delayNotified: {}, // Traccia voli che hanno già mostrato delay advise
       squawkReminded: {}, // Traccia voli per cui è già stato mostrato squawk reminder
@@ -2440,16 +2369,6 @@
     function showErrorPopup(message) {
       const backdrop = document.getElementById("errorPopupBackdrop");
       const messageEl = document.getElementById("errorPopupMessage");
-      messageEl.textContent = message;
-      backdrop.classList.add("active");
-      setTimeout(() => {
-        backdrop.classList.remove("active");
-      }, 3000);
-    }
-
-    function showSuccessPopup(message) {
-      const backdrop = document.getElementById("successPopupBackdrop");
-      const messageEl = document.getElementById("successPopupMessage");
       messageEl.textContent = message;
       backdrop.classList.add("active");
       setTimeout(() => {
@@ -2851,7 +2770,7 @@
           const parsed = JSON.parse(raw);
           state = Object.assign(state, parsed);
           if (!state.settings) {
-            state.settings = { metarIcao: "GCLP", runwayHeading: 270, theme: "dark", radarSource: "adsbexchange" };
+            state.settings = { metarIcao: "GCLP", runwayHeading: 250, radarSource: "adsbexchange" };
           }
           if (!state.settings.radarSource) state.settings.radarSource = "adsbexchange";
           if (!state.fleet) state.fleet = [];
@@ -2866,28 +2785,10 @@
         state.currentAirport = Object.keys(state.airports)[0];
       }
 
-      // flotta di default
-      if (!state.fleet || state.fleet.length === 0) {
-        state.fleet = [
-          { reg: "F-HATI", type: "PIVI" },
-          { reg: "EC-OCY", type: "P208" }
-        ];
-      }
-
-      // airport database di default
-      if (!state.airportDatabase || state.airportDatabase.length === 0) {
-        state.airportDatabase = [
-          { icao: "GCLP", name: "Las Palmas Gran Canaria" }
-        ];
-      }
     }
 
     function saveState() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    }
-
-    function applyTheme() {
-      document.body.classList.toggle("light-theme", state.settings.theme === "light");
     }
 
     function updateMetarSourceTag() {
@@ -3925,10 +3826,6 @@
     function openSettingsModal() {
       document.getElementById("settingsMetarIcaoInput").value =
         (state.settings.metarIcao || "").toUpperCase();
-      document.getElementById("settingsRunwayHeadingInput").value =
-        state.settings.runwayHeading ?? 270;
-      document.getElementById("settingsThemeSelect").value =
-        state.settings.theme || "dark";
       document.getElementById("settingsRadarSourceSelect").value =
         state.settings.radarSource || "adsbexchange";
 
@@ -4289,29 +4186,19 @@
 
     function saveSettings() {
       const metarIcao = document.getElementById("settingsMetarIcaoInput").value.trim().toUpperCase();
-      const runwayHeading = parseInt(document.getElementById("settingsRunwayHeadingInput").value, 10);
-      const theme = document.getElementById("settingsThemeSelect").value;
       const radarSource = document.getElementById("settingsRadarSourceSelect").value;
 
       if (metarIcao.length !== 4) {
         alert("ICAO must be 4 characters");
         return;
       }
-      if (isNaN(runwayHeading) || runwayHeading < 0 || runwayHeading > 359) {
-        alert("Runway heading must be 0-359");
-        return;
-      }
 
       state.settings.metarIcao = metarIcao;
-      state.settings.runwayHeading = runwayHeading;
-      state.settings.theme = theme;
       state.settings.radarSource = radarSource;
 
       saveState();
-      applyTheme();
       closeSettingsModal();
       updateMetarFromSettings();
-      showSuccessPopup("SETTINGS SAVED");
     }
 
     // ----- METAR & QNH/WIND -----
@@ -4354,7 +4241,7 @@
         windTextEl.textContent = "---";
       }
 
-      const heading = state.settings.runwayHeading ?? 270;
+      const heading = 250;
 
       const bar = document.getElementById("runwayBar");
       if (bar) {
@@ -4487,7 +4374,7 @@
             const metarSourceTag = document.getElementById("metarSourceTag");
             if (metarSourceTag) {
               const gustText = windGust ? `G${windGust}` : '';
-              metarSourceTag.textContent = `ECOWITT`;
+              metarSourceTag.textContent = `GCLB TOWER`;
             }
             
             return true;
@@ -4527,7 +4414,7 @@
       }
       
       // Aggiorna componenti
-      const heading = state.settings.runwayHeading ?? 270;
+      const heading = 250;
       if (windSpd != null && windDir != null) {
         const diffRad = (windDir - heading) * Math.PI / 180;
         const head = Math.round(windSpd * Math.cos(diffRad));
@@ -4623,7 +4510,7 @@
             const metarSourceTag = document.getElementById("metarSourceTag");
             if (metarSourceTag) {
               const gustText = lastEcowittWind.gust ? `G${lastEcowittWind.gust}` : '';
-              metarSourceTag.textContent = `ECOWITT ${lastEcowittWind.dir}°/${lastEcowittWind.speed}${gustText}KT`;
+              metarSourceTag.textContent = `GCLB TOWER`;
             }
           }
         }
@@ -4675,6 +4562,8 @@
     }
 
     // ----- UTC CLOCK -----
+    let lastCheckedDate = null;
+    
     function updateUtcClock() {
       const el = document.getElementById("utcTimeValue");
       if (!el) return;
@@ -4683,6 +4572,38 @@
       const mm = now.getUTCMinutes().toString().padStart(2,"0");
       const ss = now.getUTCSeconds().toString().padStart(2,"0");
       el.textContent = `${hh}:${mm}:${ss}`;
+      
+      // Controlla se è mezzanotte UTC (00:00:00)
+      checkMidnightReset(now);
+    }
+    
+    function checkMidnightReset(now) {
+      const currentDate = now.getUTCDate();
+      const currentHour = now.getUTCHours();
+      const currentMinute = now.getUTCMinutes();
+      const currentSecond = now.getUTCSeconds();
+
+      // Se è mezzanotte (00:00:00 UTC) e non l'abbiamo già eseguito oggi
+      if (currentHour === 0 && currentMinute === 0 && currentSecond === 0) {
+        if (lastCheckedDate !== currentDate) {
+          lastCheckedDate = currentDate;
+          clearAllFlightsAtMidnight();
+        }
+      }
+
+      // Reset del controllo quando si è oltre la mezzanotte
+      if (currentHour > 0 && lastCheckedDate === currentDate) {
+        lastCheckedDate = null;
+      }
+    }
+
+    function clearAllFlightsAtMidnight() {
+      // Cancella tutti i voli dall'airport corrente senza log/notification
+      if (state.currentAirport && state.airports[state.currentAirport]) {
+        state.airports[state.currentAirport] = [];
+        saveState();
+        renderBoard();
+      }
     }
 
     // ----- SUNRISE/SUNSET -----
@@ -5058,7 +4979,6 @@
     console.log('🚀 Initializing OPS Board...');
     loadState();
     console.log('⚙️ Settings loaded:', state.settings);
-    applyTheme();
     updateMetarSourceTag();
     setCurrentAirport(state.currentAirport);
     renderBoard();
