@@ -1657,7 +1657,10 @@
               <div style="color: #fbbf24; margin-bottom: 4px;">☀️</div>
               <div style="color: #fbbf24; font-weight: 600; font-size: 1rem;" id="sunriseTime">--:--</div>
             </div>
-            <div class="utc-time" id="utcTimeValue">--:--:--</div>
+            <div style="display:flex; flex-direction:column; align-items:center; gap:2px;">
+              <div class="utc-time" id="utcTimeValue">--:--:--</div>
+              <div class="utc-time" id="utcDateValue" style="font-size:0.9em;">--/--/----</div>
+            </div>
             <div style="font-size: 0.95rem; text-align: center; min-width: 60px;">
               <div style="color: #f97316; margin-bottom: 4px;">🌙</div>
               <div style="color: #f97316; font-weight: 600; font-size: 1rem;" id="sunsetTime">--:--</div>
@@ -4561,47 +4564,49 @@
       }
     }
 
-    // ----- UTC CLOCK -----
-    let lastCheckedDate = null;
-    
+    // ----- UTC CLOCK & DAILY RESET -----
     function updateUtcClock() {
       const el = document.getElementById("utcTimeValue");
-      if (!el) return;
+      const dateEl = document.getElementById("utcDateValue");
+      if (!el || !dateEl) return;
       const now = new Date();
       const hh = now.getUTCHours().toString().padStart(2,"0");
       const mm = now.getUTCMinutes().toString().padStart(2,"0");
       const ss = now.getUTCSeconds().toString().padStart(2,"0");
       el.textContent = `${hh}:${mm}:${ss}`;
       
-      // Controlla se è mezzanotte UTC (00:00:00)
-      checkMidnightReset(now);
-    }
-    
-    function checkMidnightReset(now) {
-      const currentDate = now.getUTCDate();
-      const currentHour = now.getUTCHours();
-      const currentMinute = now.getUTCMinutes();
-      const currentSecond = now.getUTCSeconds();
-
-      // Se è mezzanotte (00:00:00 UTC) e non l'abbiamo già eseguito oggi
-      if (currentHour === 0 && currentMinute === 0 && currentSecond === 0) {
-        if (lastCheckedDate !== currentDate) {
-          lastCheckedDate = currentDate;
-          clearAllFlightsAtMidnight();
-        }
-      }
-
-      // Reset del controllo quando si è oltre la mezzanotte
-      if (currentHour > 0 && lastCheckedDate === currentDate) {
-        lastCheckedDate = null;
-      }
+      const dd = now.getUTCDate().toString().padStart(2, "0");
+      const month = (now.getUTCMonth() + 1).toString().padStart(2, "0");
+      const yyyy = now.getUTCFullYear();
+      dateEl.textContent = `${dd}/${month}/${yyyy}`;
+      
+      // Controllo reset giornaliero indipendente da sito aperto a mezzanotte
+      checkDailyReset(now);
     }
 
-    function clearAllFlightsAtMidnight() {
+    function checkDailyReset(now) {
+      // Data corrente in UTC (YYYY-MM-DD)
+      const currentUtcDateStr = now.toISOString().split("T")[0];
+
+      // Inizializza contenitore per meta-informazioni se non esiste
+      if (!state.meta) {
+        state.meta = {};
+      }
+
+      const lastResetDateStr = state.meta.lastDailyResetDateUtc || null;
+
+      // Se non abbiamo mai fatto un reset, oppure la data è cambiata, facciamo il reset
+      if (lastResetDateStr !== currentUtcDateStr) {
+        clearAllFlightsForCurrentAirport();
+        state.meta.lastDailyResetDateUtc = currentUtcDateStr;
+        saveState();
+      }
+    }
+
+    function clearAllFlightsForCurrentAirport() {
       // Cancella tutti i voli dall'airport corrente senza log/notification
       if (state.currentAirport && state.airports[state.currentAirport]) {
         state.airports[state.currentAirport] = [];
-        saveState();
         renderBoard();
       }
     }
