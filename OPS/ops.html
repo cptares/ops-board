@@ -4268,7 +4268,7 @@
       if (arrow) {
         if (windSpd != null && windDir != null) {
           arrow.style.opacity = "1";
-          arrow.style.transform = `translateX(-50%) rotate(${windDir}deg)`;
+          arrow.style.transform = `translateX(-50%) rotate(${(windDir + 180) % 360}deg)`;
           console.log('✅ Wind arrow updated:', windDir + '°');
         } else {
           arrow.style.opacity = "0.4";
@@ -4410,7 +4410,7 @@
       // Aggiorna freccia
       if (windSpd != null && windDir != null) {
         arrow.style.opacity = "1";
-        arrow.style.transform = `translateX(-50%) rotate(${windDir}deg)`;
+        arrow.style.transform = `translateX(-50%) rotate(${(windDir + 180) % 360}deg)`;
       } else {
         arrow.style.opacity = "0.4";
         arrow.style.transform = `translateX(-50%) rotate(0deg)`;
