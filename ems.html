@@ -54,13 +54,10 @@
       position: relative;
       width: var(--phone-w);
       height: var(--phone-h);
-      border-radius: 46px;
-      background: linear-gradient(145deg, #262d35, var(--phone-body));
-      box-shadow:
-        0 28px 70px rgba(15, 22, 34, 0.32),
-        inset 0 0 0 1px rgba(255, 255, 255, 0.08),
-        inset 0 -8px 24px rgba(0, 0, 0, 0.38);
-      padding: var(--frame);
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+      padding: 0;
       isolation: isolate;
     }
 
@@ -72,6 +69,7 @@
       width: 3px;
       border-radius: 8px;
       background: #313842;
+      display: none;
     }
 
     .phone::before {
@@ -88,7 +86,7 @@
       position: relative;
       width: 100%;
       height: 100%;
-      border-radius: var(--screen-radius);
+      border-radius: 18px;
       overflow: hidden;
       display: flex;
       flex-direction: column;
@@ -108,11 +106,12 @@
       background: #0b0e12;
       border-radius: 0 0 16px 16px;
       z-index: 4;
+      display: none;
     }
 
     .menu-content {
       flex: 1;
-      padding: 58px 18px 88px;
+      padding: 18px 18px 88px;
       display: flex;
       align-items: stretch;
       justify-content: flex-start;
@@ -1630,6 +1629,52 @@
       gpsWatchId = null;
     }
 
+    function openGoogleMaps(target) {
+      const ua = navigator.userAgent || "";
+      const isAndroid = /Android/i.test(ua);
+      const isIOS = /iPhone|iPad|iPod/i.test(ua);
+
+      const hasCoords =
+        target &&
+        typeof target.lat === "number" &&
+        Number.isFinite(target.lat) &&
+        typeof target.lng === "number" &&
+        Number.isFinite(target.lng);
+
+      const hasQuery = target && typeof target.query === "string" && target.query.trim();
+      const searchValue = hasCoords
+        ? `${target.lat},${target.lng}`
+        : (hasQuery ? target.query.trim() : "");
+
+      if (!searchValue) {
+        alert("Nessun dato mappa disponibile.");
+        return;
+      }
+
+      const encoded = encodeURIComponent(searchValue);
+      const webUrl = `https://www.google.com/maps/search/?api=1&query=${encoded}`;
+
+      if (isAndroid) {
+        const intentUrl = `intent://maps.google.com/?q=${encoded}#Intent;scheme=https;package=com.google.android.apps.maps;end`;
+        window.location.href = intentUrl;
+        setTimeout(() => {
+          window.location.href = webUrl;
+        }, 1200);
+        return;
+      }
+
+      if (isIOS) {
+        const iosUrl = `comgooglemaps://?q=${encoded}`;
+        window.location.href = iosUrl;
+        setTimeout(() => {
+          window.location.href = webUrl;
+        }, 1200);
+        return;
+      }
+
+      window.open(webUrl, "_blank", "noopener,noreferrer");
+    }
+
     function gpsTemplate() {
       return `
         <section class="sheet single-focus">
@@ -1726,8 +1771,7 @@
             alert("Prima premi RILEVA POSIZIONE.");
             return;
           }
-          const url = `https://www.google.com/maps?q=${fix.lat},${fix.lng}`;
-          window.open(url, "_blank", "noopener,noreferrer");
+          openGoogleMaps({ lat: fix.lat, lng: fix.lng });
         });
       }
 
@@ -1951,8 +1995,7 @@
             alert("Luogo intervento non disponibile per aprire la mappa.");
             return;
           }
-          const url = `https://www.google.com/maps?q=${encodeURIComponent(luogo)}`;
-          window.open(url, "_blank", "noopener,noreferrer");
+          openGoogleMaps({ query: luogo });
         });
       }
 
