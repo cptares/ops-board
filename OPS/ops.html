@@ -1495,149 +1495,12 @@
       }
     }
 
-    /* LOGIN MODAL */
-    .login-modal-backdrop {
-      position: fixed;
-      inset: 0;
-      background: transparent;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 10000;
-      pointer-events: none;
-    }
-
-    .login-modal-backdrop.active {
-      display: flex;
-    }
-
-    .login-modal {
-      background: rgba(8, 15, 35, 0.75);
-      border: 1px solid rgba(100, 120, 180, 0.2);
-      border-radius: 20px;
-      padding: 50px 45px;
-      width: 320px;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
-      transform: translateY(100vh);
-      transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
-      pointer-events: auto;
-      backdrop-filter: blur(20px);
-    }
-
-    .login-modal-backdrop.active .login-modal {
-      transform: translateY(0);
-    }
-
-    .login-modal.error {
-      animation: shake 0.5s ease-in-out;
-      border-color: rgba(255, 80, 80, 0.6);
-    }
-
-    @keyframes shake {
-      0%, 100% { transform: translateX(0); }
-      10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
-      20%, 40%, 60%, 80% { transform: translateX(10px); }
-    }
-
-    .login-input-group {
-      margin-bottom: 20px;
-    }
-
-    .login-input-group input {
-      width: 100%;
-      padding: 16px 18px;
-      background: rgba(15, 25, 50, 0.4);
-      border: 1px solid rgba(120, 140, 180, 0.15);
-      border-radius: 12px;
-      color: rgba(255, 255, 255, 0.9);
-      font-size: 15px;
-      box-sizing: border-box;
-      transition: all 0.3s ease;
-    }
-
-    .login-input-group input::placeholder {
-      color: rgba(150, 160, 180, 0.4);
-      font-size: 14px;
-    }
-
-    .login-input-group input:focus {
-      outline: none;
-      border-color: rgba(120, 140, 200, 0.4);
-      background: rgba(15, 25, 50, 0.6);
-      box-shadow: 0 0 0 3px rgba(100, 120, 180, 0.1);
-    }
-
-    .login-input-group input.error {
-      border-color: rgba(255, 80, 80, 0.5);
-      background: rgba(50, 20, 20, 0.3);
-      box-shadow: 0 0 0 3px rgba(255, 80, 80, 0.1);
-    }
-
-    .login-btn {
-      width: 100%;
-      padding: 16px;
-      background: rgba(90, 110, 150, 0.25);
-      border: 1px solid rgba(120, 140, 180, 0.3);
-      border-radius: 12px;
-      color: rgba(200, 210, 230, 0.9);
-      font-size: 15px;
-      font-weight: 500;
-      cursor: pointer;
-      letter-spacing: 0.5px;
-      margin-top: 10px;
-      transition: all 0.3s ease;
-    }
-
-    .login-btn:hover {
-      background: rgba(100, 120, 160, 0.35);
-      border-color: rgba(130, 150, 190, 0.5);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-      transform: translateY(-1px);
-    }
-
-    .login-btn:active {
-      transform: translateY(0);
-    }
-
-    .login-error {
-      color: rgba(255, 100, 100, 0.8);
-      text-align: center;
-      margin-top: 16px;
-      font-size: 12px;
-      display: none;
-      letter-spacing: 0.3px;
-    }
-
-    .login-error.active {
-      display: block;
-      animation: errorPulse 0.5s ease-in-out;
-    }
-
-    @keyframes errorPulse {
-      0%, 100% { opacity: 0.8; }
-      50% { opacity: 0.4; }
-    }
-
   </style>
 </head>
 <body>
   <!-- SPLASH SCREEN -->
   <div class="splash-screen" id="splashScreen">
-    <img src="images/logo/OPS.png" alt="Logo" class="splash-logo">
-  </div>
-
-  <!-- LOGIN MODAL -->
-  <div class="login-modal-backdrop" id="loginModalBackdrop">
-    <div class="login-modal">
-      <div class="login-input-group">
-        <input type="text" id="loginUsername" placeholder="Username" autocomplete="off">
-      </div>
-      <div class="login-input-group">
-        <input type="password" id="loginPassword" placeholder="Password" autocomplete="off">
-      </div>
-      <button class="login-btn" id="loginBtn">Enter</button>
-      <div class="login-error" id="loginError">Invalid credentials</div>
-    </div>
+    <img src="images/logo/OPS.png" alt="Logo" class="splash-logo" id="splashLogo">
   </div>
 
   <div class="page">
@@ -2012,6 +1875,16 @@
         </div>
       </div>
 
+      <div class="settings-section">
+        <div class="settings-section-title">FlightLogger</div>
+        <div class="modal-row">
+          <div>
+            <div class="modal-label">Authorization token</div>
+            <input id="settingsFlightLoggerTokenInput" type="password" placeholder="Incolla token FlightLogger">
+          </div>
+        </div>
+      </div>
+
 
 
       <div class="modal-footer" style="margin-top:10px;">
@@ -2350,7 +2223,8 @@
         useEcowitt: true,
         ecowittMac: "C4:5B:BE:FA:10:66",
         ecowittApiKey: "38b1bbae-c7ca-4e64-817f-9b136e0b4d2f",
-        ecowittAppKey: "EFB59102B7AE48CA18CB8D6D6D061D4B"
+        ecowittAppKey: "EFB59102B7AE48CA18CB8D6D6D061D4B",
+        flightLoggerToken: ""
       },
       fleet: [],
       airportDatabase: [],
@@ -3831,6 +3705,8 @@
         (state.settings.metarIcao || "").toUpperCase();
       document.getElementById("settingsRadarSourceSelect").value =
         state.settings.radarSource || "adsbexchange";
+      document.getElementById("settingsFlightLoggerTokenInput").value =
+        state.settings.flightLoggerToken || "";
 
       document.getElementById("settingsModalBackdrop").classList.add("active");
     }
@@ -3947,12 +3823,13 @@
       const basicQuery = {
         query: `query {\n          bookings(from: "${startDate}", to: "${endDate}", all: true) {\n            nodes {\n              ... on SingleStudentBooking { id flightStartsAt flightEndsAt comment aircraft { callSign } instructor { callSign } student { callSign } departureAirport { name } arrivalAirport { name } }\n              ... on MultiStudentBooking { id flightStartsAt flightEndsAt comment aircraft { callSign } instructor { callSign } students { callSign } departureAirport { name } arrivalAirport { name } }\n              ... on OperationBooking { id flightStartsAt flightEndsAt comment aircraft { callSign } pic { callSign } crew { callSign } departureAirport { name } arrivalAirport { name } }\n            }\n          }\n        }`
       };
+      const flightLoggerToken = (state.settings.flightLoggerToken || "").trim();
       async function doFetch(q) {
         const response = await fetch("https://api.flightlogger.net/graphql", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": "Bearer b02f466a1ed25106cac8fc2cf9f814a7"
+            "Authorization": flightLoggerToken
           },
           body: JSON.stringify(q)
         });
@@ -4190,6 +4067,7 @@
     function saveSettings() {
       const metarIcao = document.getElementById("settingsMetarIcaoInput").value.trim().toUpperCase();
       const radarSource = document.getElementById("settingsRadarSourceSelect").value;
+      const flightLoggerToken = document.getElementById("settingsFlightLoggerTokenInput").value.trim();
 
       if (metarIcao.length !== 4) {
         alert("ICAO must be 4 characters");
@@ -4198,6 +4076,7 @@
 
       state.settings.metarIcao = metarIcao;
       state.settings.radarSource = radarSource;
+      state.settings.flightLoggerToken = flightLoggerToken;
 
       saveState();
       closeSettingsModal();
@@ -5067,71 +4946,13 @@
       if (e.target.id === "aircraftInfoModalBackdrop") closeAircraftInfoModal();
     });
 
-    // LOGIN SYSTEM
-    const errorSound = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIG2m98OScTgwOU6vm8rlkHQc5j9XwzYUsBS15y/DalEILF2W78uKhUhELTKXk8bllHgc9k9r0xXMmBitsy+vPlEQLGGrB8eCaUhAMT6vm8bljHwY8lNnyyXgpByt0zu/PkUMLGnC/8tyhUREMUKzq8rVgHgY9ldz0xG8lBil0zO7Nk0UIHHDBx+GbVBIMUqro7rVlIAg/l9/zxHQoBSx5zu7QlEgLHXLC7dmgVBMMU6vn7rhsJgo/mtz0wnYsBi5+0e3QmUoMHnXF7tmkVhUOVK3p7rpuKQpAm931wnwyByp7zu/TmU4PHnjG69qlWBYPVK/r7r1zKwxBnN/2wXs0CSmAz+/Um1EPH3vI69ysXBkRV7Pt7sB2LQ1Cn+D4wH05DCSF0vLYoFUSInzK7d6wYBoSWLTv7sR6MQ5EouH5v4A6CiOI0/TbpVwVJH/N7eCxZR0UWrXx78V8MxBFpOP6voE8CSSJ1PTdqGEYJoHQ7eSyaCEVXLjy8Md/NRJGp+T7vYM9CSaN1fXeqmQaKIPR7uazaiIWXrr08cpxNRNHqOX9vYU7CiqO1vbgrmYcKoTS7+m1bCQWYbz27MtzNhVIquX+u4Y6CyuQ1/fir2kdK4bU8Oy2biYYY771+sx1NxZJq+b/uoY7DCyS2PfktGsdLIjV8O63cCgYZcH389J4OBhKrOf/uYU6DCuT2fjltWwhLYrW8e+4cikZacL49NV5OhpLreb/t4U5Ci2U2vnouXErLoze8vG6dSocaMT69NV7ORxMr+j/toU4CS+V2/vptXIuL47Y9O+3dywcasX79dh9Ox1Nsuj+tYQ2CS6X3PzqtnQxMI/Y9fC5eiweacb89Nl+OxxNs+n+s4M1CS2Y3f/ps3MxMJDZ9fG7ey8eaMf99Nl/PB5Ns+n+soI0CC2Z3v/qsnMyMZHa9vK7fC8fbMj/9dp/PR5Os+r+sYEzBy2a3//rsnQzMpLb9/K8fS8f/8nP88ByLCfDwWFFjqj/xNNKKf');
-
-    document.getElementById("splashScreen").addEventListener("click", () => {
+    document.getElementById("splashLogo").addEventListener("click", () => {
       const splash = document.getElementById("splashScreen");
       splash.classList.add("slide-up");
       
       setTimeout(() => {
-        document.getElementById("loginModalBackdrop").classList.add("active");
-        document.getElementById("loginUsername").value = "";
-        document.getElementById("loginPassword").value = "";
-        document.getElementById("loginError").classList.remove("active");
-        document.getElementById("loginUsername").classList.remove("error");
-        document.getElementById("loginPassword").classList.remove("error");
-        setTimeout(() => document.getElementById("loginUsername").focus(), 100);
+        splash.classList.add("hidden");
       }, 300);
-    });
-
-    function attemptLogin() {
-      const username = document.getElementById("loginUsername").value;
-      const password = document.getElementById("loginPassword").value;
-      const modal = document.querySelector(".login-modal");
-      const usernameInput = document.getElementById("loginUsername");
-      const passwordInput = document.getElementById("loginPassword");
-      
-      if (username === "OPS" && password === "0000") {
-        modal.classList.remove("error");
-        usernameInput.classList.remove("error");
-        passwordInput.classList.remove("error");
-        document.getElementById("loginError").classList.remove("active");
-        
-        setTimeout(() => {
-          document.getElementById("loginModalBackdrop").classList.remove("active");
-          document.getElementById("splashScreen").classList.add("hidden");
-        }, 300);
-      } else {
-        // Play error sound
-        errorSound.currentTime = 0;
-        errorSound.play().catch(() => {}); // Ignore audio errors
-        
-        // Add error classes
-        modal.classList.remove("error");
-        void modal.offsetWidth; // Force reflow
-        modal.classList.add("error");
-        
-        usernameInput.classList.add("error");
-        passwordInput.classList.add("error");
-        document.getElementById("loginError").classList.add("active");
-        document.getElementById("loginPassword").value = "";
-        
-        // Remove error classes after animation
-        setTimeout(() => {
-          modal.classList.remove("error");
-        }, 500);
-        
-        document.getElementById("loginPassword").focus();
-      }
-    }
-
-    document.getElementById("loginBtn").addEventListener("click", attemptLogin);
-    document.getElementById("loginPassword").addEventListener("keypress", (e) => {
-      if (e.key === "Enter") attemptLogin();
-    });
-    document.getElementById("loginUsername").addEventListener("keypress", (e) => {
-      if (e.key === "Enter") document.getElementById("loginPassword").focus();
     });
   </script>
 </body>
